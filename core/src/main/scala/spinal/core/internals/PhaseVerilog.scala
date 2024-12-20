@@ -1064,9 +1064,13 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           if (IFlist.size == 0 || IFlist == Nil) {
             return
           }
-          println(
-            s"${IFlist.size}"
+          innerFunc(
+            someNode=IFlist.last,
+            //IFlist=IFlist.slice(1, IFlist.size)
           )
+          //println(
+          //  s"${IFlist.size}"
+          //)
           val newName = IFlist match {
             case head :: tail => tail.foldLeft((head, List(head.getName()))){case ((nowIf, nameList), someNode) =>
               //(someNode, nowIf.elementsCache.find(_._2 == someNode).get._1 :: nameList)//TODO:error handle on find.get
@@ -1106,10 +1110,6 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               myGetElemName(IFlist.last.elementsCache, "").getOrElse("no_name", null)._1//TODO:error handle on find.get
           }
           someNode.name = newName
-          innerFunc(
-            someNode=IFlist(0),
-            //IFlist=IFlist.slice(1, IFlist.size)
-          )
         }
         innerFunc(
           someNode=node,
