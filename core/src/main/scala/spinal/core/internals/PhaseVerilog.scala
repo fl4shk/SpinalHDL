@@ -549,42 +549,8 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
   ): Option[(String, Data)] = {
     cache.flatMap{
       case (a, x: Bundle) => getElemName(node, x.elementsCache, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
-      case (a, x: Vec[_]) => {
-        getElemName(node, x.elements, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
-      }
-      case (a, x) => {
-        val tempSvInterfaceVecFound = mutable.HashSet[Data]()
-        val myParentVec: Data = getParentVec(
-          someNode=x,
-          svInterfaceVecFound=tempSvInterfaceVecFound,
-          shouldStopFunc=(
-            (otherNode) => otherNode match {
-              case otherIntf: Interface if (
-                !(otherIntf.thisIsNotSVIF || otherIntf.noConvertSVIFvec)
-              ) => false
-              case _ => true
-            }
-          )
-        )
-        def doDefault(): Option[(String, Data)] = (
-          if(x == node) Some((s"${name}_${a}".stripPrefix("_"), x)) else None
-        )
-        if (myParentVec != x) {
-          myParentVec match {
-            case vec: Vec[_] => {
-            }
-            case _ => {
-            }
-          }
-          val temp = (s"${name}[${a}]", x)
-          println(
-            s"testificate: ${temp}"
-          )
-          if(x == node) Some(temp) else None
-        } else {
-          doDefault()
-        }
-      }
+      case (a, x: Vec[_]) => getElemName(node, x.elements, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
+      case (a, x) => if(x == node) Some((s"${name}_${a}".stripPrefix("_"), x)) else None
     }.headOption
   }
   def emitInterface(interface: Interface, convertIntfVec: Boolean=true): StringBuilder = {
@@ -1060,7 +1026,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           //): Option[(String, Data)] = {
           //  getElemName(someNode, cache, name)
           //}
-          val IFlist = someNode.rootIFList()
+          val IFlist = someNode.rootIFList().reverse
           //if (IFlist.size == 0 || IFlist == Nil) {
           //  return
           //}
@@ -1105,25 +1071,96 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           //  }._2.reverse.reduce(_ + "." + _) + "." +
           //    myGetElemName(IFlist.last.elementsCache, "").getOrElse("no_name", null)._1//TODO:error handle on find.get
           //}
+
           var newName: String = ""
-          var tempName: String = ""
+          //(
+          //  getElemName(someNode, IFlist(0).elementsCache, "").getOrElse("no_name", null)._1
+          //)
+          //var tempName: String = ""
+          var prevName: String = (
+            getElemName(someNode, IFlist(0).elementsCache, "").getOrElse("no_name", null)._1
+          )
+          newName = prevName
           for ((intf, intfIdx) <- IFlist.view.zipWithIndex) {
-            val tempNode: Data = (
-              if (intfIdx == IFlist.view.size - 1) (
-                someNode
-              ) else (
-                IFlist.view(intfIdx + 1)
+            //val tempNode: Data = (
+            //  if (intfIdx == IFlist.view.size - 1) (
+            //    someNode
+            //  ) else (
+            //    IFlist.view(intfIdx + 1)
+            //  )
+            //)
+            val myFound = intf.elementsCache.find{
+              current => {
+                current._1 == prevName
+              }
+            }.getOrElse("no_name", null)
+            prevName = myFound._1
+
+            val tempSvInterfaceVecFound = mutable.HashSet[Data]()
+            val myParentVec: Data = getParentVec(
+              someNode=myFound._2,
+              svInterfaceVecFound=tempSvInterfaceVecFound,
+              shouldStopFunc=(
+                (otherNode) => otherNode match {
+                  case otherIntf: Interface if (
+                    !(otherIntf.thisIsNotSVIF || otherIntf.noConvertSVIFvec)
+                  ) => false
+                  case _ => true
+                }
               )
             )
-            newName = (
-              newName
-              + (if (intfIdx == 0) "." else "")
-              + {
-                tempName = getElemName(
-                  tempNode, intf.elementsCache, tempName
-                ).getOrElse("no_name", null)._1
-                tempName
+            if (myParentVec != myFound._2) {
+              myParentVec match {
+                case parentVec: Vec[_] => {
+                  val vecChainArr = mutable.ArrayBuffer[Vec[_]]()
+                  val haveAllSameIntf = outerDoCompareVec(
+                    nodes=parentVec,
+                    vecChainArr=vecChainArr,
+                    doConvertIntfVec=true,
+                  )
+                  if (haveAllSameIntf && vecChainArr.size > 0) {
+                    var didFind: Boolean = false
+                    for ((vecElem, vecIdx) <- parentVec.view.zipWithIndex) {
+                      if (vecElem == myFound._2) {
+                        prevName = (
+                          prevName.stripSuffix(s"_${vecIdx}") + s"[${vecIdx}]"
+                        )
+                        didFind = true
+                      }
+                    }
+                    if (!didFind) {
+                      println(
+                        s"eek! didFind == false: "
+                        + s"${parentVec.getName()} ${parentVec.size}"
+                      )
+                      assert(false)
+                    }
+                  }
+                }
+                case _ => {
+                  println(
+                    s"eek! !myParentVec.isInstanceOf[Vec[...]]: "
+                    + s"${myParentVec.getName()}"
+                  )
+                  assert(false)
+                }
               }
+              //val temp = (s"${name}[${a}]", x)
+              //println(
+              //  s"testificate: ${temp}"
+              //)
+              //if(x == node) Some(temp) else None
+            }
+            newName = (
+              prevName
+              + (if (intfIdx != 0) "." else "")
+              + newName
+              //+ {
+              //  tempName = getElemName(
+              //    tempNode, intf.elementsCache, tempName
+              //  ).getOrElse("no_name", null)._1
+              //  tempName
+              //}
             )
           }
           someNode.name = newName
