@@ -743,7 +743,9 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
       }
     }
     for ((name, elem) <- interface.elementsCache) {
-      genSig(ret, name, elem)
+      if (!svInterfaceVecFound.contains(elem)) {
+        genSig(ret, name, elem)
+      }
     }
     ret ++= "\n"
     if(pc.config.svInterfaceIncludeModport && !interface.thisIsNotSVModport) {
