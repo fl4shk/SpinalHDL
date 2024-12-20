@@ -341,12 +341,14 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                       ) {
                         nodeIntf.IFvecParent match {
                           case vecParent: Vec[_] => {
-                            //vecChainArr.find(_ == vecParent) match {
-                            //  case Some(_) =>
-                            //  case None => {
+                            vecChainArr.find(_ == vecParent) match {
+                              case Some(_) => {
+                                assert(false)
+                              }
+                              case None => {
                                 vecChainArr += vecParent
-                            //  }
-                            //}
+                              }
+                            }
                           }
                           case _ =>
                         }
