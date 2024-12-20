@@ -626,20 +626,20 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           val myParentVec: Data = myGetParentVec(node)
           if (myParentVec != node) {
             svInterfaceVecFound += node
-            myParentVec match {
-              case vec: Vec[_] => {
-                println(
-                  s"highestParentVec != node: have vec: "
-                  + s"${vec.getName()} ${vec.size}"
-                )
-              }
-              case _ => {
-                println(
-                  s"highestParentVec != node: have other: "
-                  + s"${myParentVec.getName()}"
-                )
-              }
-            }
+            //myParentVec match {
+            //  case vec: Vec[_] => {
+            //    println(
+            //      s"highestParentVec != node: have vec: "
+            //      + s"${vec.getName()} ${vec.size}"
+            //    )
+            //  }
+            //  case _ => {
+            //    println(
+            //      s"highestParentVec != node: have other: "
+            //      + s"${myParentVec.getName()}"
+            //    )
+            //  }
+            //}
             genSig(
               ret=ret,
               name=name,
@@ -743,11 +743,11 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                 //    name=name
                 //  )
                 //)
-                println(
-                  s"adding vector elements:"
-                  + s"${intf.getName()} ${intf.origDefinitionName}; "
-                  + s"${elemName} ${intfDimString}"
-                )
+                //println(
+                //  s"adding vector elements:"
+                //  + s"${intf.getName()} ${intf.origDefinitionName}; "
+                //  + s"${elemName} ${intfDimString}"
+                //)
                 genSig(ret, (elemName + intfDimString), intf)
               }
               case _ => {

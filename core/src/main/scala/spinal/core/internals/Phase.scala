@@ -2584,7 +2584,7 @@ class PhasePropagateNames(pc: PhaseContext) extends PhaseMisc {
             s.walkDrivingExpressions{
               case src : BaseType => if(src.isUnnamed || (src.algoIncrementale == algoId && src.algoInt > depth)){
                 src.unsetName()
-                src.setWeakName(globalData.anonymSignalPrefix + "_" + dst.getName())
+                src.setWeakName(globalData.anonymSignalPrefix + "_" + dst.getName().replace('[', '_').replace(']', '_'))
                 src.algoIncrementale = algoId
                 src.algoInt = depth
                 explore(src, depth + 1)
