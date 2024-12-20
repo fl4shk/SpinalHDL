@@ -284,122 +284,160 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
   def doCompare(
     nodeData: Data,
     otherNodeData: Data,
-    //vecSizeArr: mutable.ArrayBuffer[Int]=null,
     vecChainArr: mutable.ArrayBuffer[Vec[_]]=null,
   ): CmpResultKind = {
-    //--------
-    nodeData match {
-      case nodeIntf: Interface => {
-        otherNodeData match {
-          //case otherBt: BaseType => {
-          //  return false
-          //}
-          case otherIntf: Interface => {
-            if (
-              emitInterface(nodeIntf).result()
-              == emitInterface(otherIntf).result()
-            ) {
-              if (nodeIntf.elementsCache != null && otherIntf.elementsCache != null) {
-                if (nodeIntf.elementsCache.size == otherIntf.elementsCache.size) {
-                  for ((nodeElemName, nodeElem) <- nodeIntf.elementsCache.view) {
-                    otherIntf.elementsCache.find{otherElem => {
-                      otherElem._1 == nodeElemName
-                    }} match {
-                      case Some((otherElemName, otherElem)) => {
-                        if (doCompare(
-                          nodeData=nodeElem,
-                          otherNodeData=otherElem,
-                        ) == CmpResultKind.Diff) {
-                          return CmpResultKind.Diff
+    //val tempFoundSet: mutable.HashSet[Data] = (
+    //  if (vecChainArr != null) (
+    //    mutable.HashSet[Data]()
+    //  ) else (
+    //    null
+    //  )
+    //)
+    //def innerCompare(
+    //  nodeData: Data,
+    //  otherNodeData: Data,
+    //  vecChainArr: mutable.ArrayBuffer[Vec[_]]=null,
+    //): CmpResultKind = {
+      //--------
+      nodeData match {
+        case nodeIntf: Interface => {
+          otherNodeData match {
+            case otherIntf: Interface => {
+              if (
+                emitInterface(nodeIntf, false).result()
+                == emitInterface(otherIntf, false).result()
+              ) {
+                if (nodeIntf.elementsCache != null && otherIntf.elementsCache != null) {
+                  if (nodeIntf.elementsCache.size == otherIntf.elementsCache.size) {
+                    for ((nodeElemName, nodeElem) <- nodeIntf.elementsCache.view) {
+                      otherIntf.elementsCache.find{otherElem => {
+                        otherElem._1 == nodeElemName
+                      }} match {
+                        case Some((otherElemName, otherElem)) => {
+                          if (doCompare(
+                            nodeData=nodeElem,
+                            otherNodeData=otherElem,
+                          ) == CmpResultKind.Diff) {
+                            return CmpResultKind.Diff
+                          }
+                        }
+                        case None => {
+                          println(
+                            s"eek! couldn't find this nodeElemName:${nodeElemName}"
+                          )
+                          assert(false)
+                          return null
                         }
                       }
-                      case None => {
-                        println(
-                          s"eek! couldn't find this nodeElemName:${nodeElemName}"
-                        )
-                        assert(false)
-                        //return CmpKind.Other
-                        return null
-                        //return false
-                      }
                     }
+                    if (
+                      vecChainArr != null
+                      && nodeIntf.IFvecParent != null
+                      && otherIntf.IFvecParent != null
+                    ) {
+                      if (
+                        //vecChainArr.size > 0 && vecChainArr.last(0) != nodeIntf.IFvecParent
+                        vecChainArr.size == 0
+                      ) {
+                        nodeIntf.IFvecParent match {
+                          case vecParent: Vec[_] => {
+                            //vecChainArr.find(_ == vecParent) match {
+                            //  case Some(_) =>
+                            //  case None => {
+                                vecChainArr += vecParent
+                            //  }
+                            //}
+                          }
+                          case _ =>
+                        }
+                      }
+                      //else {
+                      //}
+                    }
+                    return CmpResultKind.Same
+                  } else {
+                    return CmpResultKind.Diff
                   }
-                  return CmpResultKind.Same
-                  //return true
                 } else {
-                  //return false
-                  return CmpResultKind.Diff
+                  return CmpResultKind.Same
                 }
               } else {
+                return CmpResultKind.Diff
+              }
+            }
+            case _ => {
+              //return CmpResultKind.Other
+              return CmpResultKind.Diff
+            }
+          }
+        }
+        // TODO: support non-`Interface` `Bundle`s
+        //case nodeBndl: Bundle => {
+        //  otherNodeData match {
+        //    case otherBndl: Bundle => {
+        //    }
+        //    case _ => {
+        //    }
+        //  }
+        //}
+        case nodeVec: Vec[_] => {
+          otherNodeData match {
+            case otherVec: Vec[_] => {
+              if (nodeVec.size == otherVec.size) {
+                for (vecIdx <- 0 until nodeVec.size) {
+                  val cmpResult = doCompare(
+                    nodeData=nodeVec(vecIdx),
+                    otherNodeData=otherVec(vecIdx),
+                    vecChainArr=(
+                      if (vecIdx == 0) (
+                        vecChainArr
+                      ) else (
+                        null
+                      )
+                    ),
+                    //atTop=false,
+                    //parentsAreVecs=true,
+                  )
+                  if (cmpResult != CmpResultKind.Same) {
+                    //return false
+                    return CmpResultKind.Diff
+                  }
+                }
+                if (vecChainArr != null) {
+                  //vecSizeArr += nodeVec.size
+                  vecChainArr.find(_ == nodeVec) match {
+                    case Some(_) => {
+                      assert(false)
+                    }
+                    case None => {
+                      vecChainArr += nodeVec
+                    }
+                  }
+                }
                 //return true
                 return CmpResultKind.Same
+              } else {
+                //return false
+                return CmpResultKind.Diff
               }
-            } else {
-              //return false
+            }
+            case _ => {
               return CmpResultKind.Diff
             }
           }
-          case _ => {
-            //return false
-            //return CmpResultKind.Other
-            return CmpResultKind.Diff
-          }
+        }
+        case _ => {
+          return CmpResultKind.Other
         }
       }
-      // TODO: support non-`Interface` `Bundle`s
-      //case nodeBndl: Bundle => {
-      //  otherNodeData match {
-      //    case otherBndl: Bundle => {
-      //    }
-      //    case _ => {
-      //    }
-      //  }
-      //}
-      case nodeVec: Vec[_] => {
-        otherNodeData match {
-          case otherVec: Vec[_] => {
-            if (nodeVec.size == otherVec.size) {
-              for (vecIdx <- 0 until nodeVec.size) {
-                val cmpResult = doCompare(
-                  nodeData=nodeVec(vecIdx),
-                  otherNodeData=otherVec(vecIdx),
-                  vecChainArr=(
-                    if (vecIdx == 0) (
-                      vecChainArr
-                    ) else (
-                      null
-                    )
-                  ),
-                  //atTop=false,
-                  //parentsAreVecs=true,
-                )
-                if (cmpResult != CmpResultKind.Same) {
-                  //return false
-                  if (vecChainArr != null) {
-                    //vecSizeArr += nodeVec.size
-                    vecChainArr += nodeVec
-                  }
-                  return CmpResultKind.Diff
-                }
-              }
-              //return true
-              return CmpResultKind.Same
-            } else {
-              //return false
-              return CmpResultKind.Diff
-            }
-          }
-          case _ => {
-            return CmpResultKind.Diff
-          }
-        }
-      }
-      case _ => {
-        return CmpResultKind.Other
-      }
-    }
-    assert(false)
-    return null
+      assert(false)
+      return null
+    //}
+    //return innerCompare(
+    //  nodeData=nodeData,
+    //  otherNodeData=otherNodeData,
+    //  vecChainArr=vecChainArr,
+    //)
   }
   def getElemName(
     node: Data, cache: ArrayBuffer[(String, Data)], name: String
@@ -412,7 +450,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
       case (a, x) => if(x == node) Some((s"${name}_${a}".stripPrefix("_"), x)) else None
     }.headOption
   }
-  def emitInterface(interface: Interface): StringBuilder = {
+  def emitInterface(interface: Interface, convertIntfVec: Boolean=true): StringBuilder = {
     import pc._
     val svInterfaceVecFound = mutable.HashSet[Data]()
 
@@ -428,7 +466,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         }.reduce(_ + _).stripSuffix(",\n") + "\n) "
     ret ++= s"interface ${interface.definitionName} ${generic}() ;\n\n"
     val sizeZero = mutable.HashSet[String]()
-    def genBase[T <: Data](ret: StringBuilder, name: String, name1: String, elem: T, parentName: String): Unit = {
+    def genBase[T <: Data](ret: StringBuilder, name: String, name1: String, elem: T): Unit = {
       elem match {
         case _: Bool => {
           val size = ""
@@ -460,12 +498,11 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             //  s"${name}[${subIntfVecSize}]"
             //),
             x,
-            parentName,
           )
         }
       }
     }
-    def genSig[T <: Data](ret: StringBuilder, name: String, elem: T, parentName: String, doConvertIntfVec: Boolean=false): Unit = {
+    def genSig[T <: Data](ret: StringBuilder, name: String, elem: T, doConvertIntfVec: Boolean=false): Unit = {
       elem match {
         case node: Interface if (!node.thisIsNotSVIF) => {
           def getHighestParentVec(
@@ -473,33 +510,37 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             //lastRoot: Data,
           ): Data = {
             if (
-              node.noConvertSVIFvec
-              || svInterfaceVecFound.contains(node)
+              !convertIntfVec
+              || node.noConvertSVIFvec
+              //|| svInterfaceVecFound.contains(node)
               || someNode.IFvecParent == null
             ) {
-              println(
-                s"test: ${node.getName()}"
-              )
-              if (node.noConvertSVIFvec) {
-                println(
-                  s"have node.noConvertSVIFvec: ${node.getName()}"
-                )
-              }
-              if (svInterfaceVecFound.contains(node)) {
-                println(
-                  s"apparently already handled this one: ${node.getName()}"
-                )
-              }
+              //println(
+              //  s"test: ${node.getName()}"
+              //)
+              //if (node.noConvertSVIFvec) {
+              //  println(
+              //    s"have node.noConvertSVIFvec: ${node.getName()}"
+              //  )
+              //}
+              //if (svInterfaceVecFound.contains(node)) {
+              //  println(
+              //    s"apparently already handled this one: ${node.getName()}"
+              //  )
+              //}
             } else {
               someNode.IFvecParent match {
                 case parentVec: Vec[_] => {
                   var found: Boolean = false
-                  println(
-                    s"getHighestParentVec(): ${someNode.getName()} ${parentVec.size}"
-                  )
+                  //println(
+                  //  s"getHighestParentVec(): ${someNode.getName()} ${parentVec.size}"
+                  //)
                   for ((elem, idx) <- parentVec.zipWithIndex) {
-                    svInterfaceVecFound += elem
+                    //if (node == someNode) {
+                      svInterfaceVecFound += elem
+                    //}
                     if (elem == someNode) {
+                      //svInterfaceVecFound += elem
                       found = true
                     }
                   }
@@ -508,11 +549,11 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                   }
                 }
                 case _ => {
-                  println(
-                    s"Had other kind of parent: "
-                    + s"someNode:${someNode.getName()} "
-                    + s"${someNode.IFvecParent.getClass.getSimpleName}"
-                  )
+                  //println(
+                  //  s"Had other kind of IFvecParent: "
+                  //  + s"someNode:${someNode.getName()} "
+                  //  + s"${someNode.IFvecParent.getClass.getSimpleName}"
+                  //)
                 }
               }
             }
@@ -539,10 +580,9 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               ret=ret,
               name=name,
               elem=highestParentVec,
-              parentName=parentName,
               doConvertIntfVec=true,
             )
-          } else {
+          } else if (!svInterfaceVecFound.contains(node)) {
             val genericFlat = node.genericElements
 
             val t = if (genericFlat.nonEmpty) {
@@ -576,7 +616,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         }
         case nodes: Bundle => {
           for ((name1, node) <- nodes.elementsCache) {
-            genBase(ret, name, name1, node, name)
+            genBase(ret, name, name1, node)
           }
         }
         case nodes: Vec[_] => {
@@ -584,10 +624,10 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           val vecChainArr = mutable.ArrayBuffer[Vec[_]]()
           if (haveAllSameIntf) {
             for (idx <- 0 until nodes.size) {
-              println(
-                s"checking this one: "
-                + s"nodes(${idx}) ${nodes.getName()} ${nodes(idx).getName()}"
-              )
+              //println(
+              //  s"checking this one: "
+              //  + s"nodes(${idx}) ${nodes.getName()} ${nodes(idx).getName()}"
+              //)
               if (idx > 0) {
                 doCompare(
                   nodeData=nodes(idx),
@@ -610,7 +650,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           }
           if (haveAllSameIntf && vecChainArr.size > 0) {
             //genBase(ret, name, "0", nodes(0), nodes.size)
-            val intfDimString = vecChainArr.map(vec => s"[${vec.size}]")
+            val intfDimString = vecChainArr.flatMap(vec => s"[${vec.size}]")
             //val intfNode = vecChainArr.map(vec => vec(0))
             //def getIntfNode(
             //  currChain: Data,
@@ -623,14 +663,36 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             //}
             vecChainArr.last(0) match {
               case intf: Interface => {
-                genSig(ret, (parentName + intfDimString), intf, parentName)
+                val tempIFparent: Interface = (
+                  intf.IFparent match {
+                    case parent: Interface => parent
+                    case _ => {
+                      null
+                    }
+                  }
+                )
+                val elemName = (
+                  getElemName(
+                    node=intf,
+                    cache=tempIFparent.elementsCache,
+                    name=""
+                  )
+                )
+                println(
+                  s"adding vector elements:"
+                  + s"${intf.getName()} ${intf.origDefinitionName}; "
+                  + s"${elemName} ${intfDimString}"
+                )
+                genSig(ret, (name + intfDimString), intf)
               }
               case _ => {
               }
             }
-          } else {
+          } else if (!svInterfaceVecFound.contains(nodes)) {
             for ((node, idx) <- nodes.zipWithIndex) {
-              genBase(ret, name, idx.toString, node, name)
+              if (!svInterfaceVecFound.contains(node)) {
+                genBase(ret, name, idx.toString, node)
+              }
             }
           }
         }
@@ -658,7 +720,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
       }
     }
     for ((name, elem) <- interface.elementsCache) {
-      genSig(ret, name, elem, name)
+      genSig(ret, name, elem)
     }
     ret ++= "\n"
     if(pc.config.svInterfaceIncludeModport && !interface.thisIsNotSVModport) {
