@@ -582,7 +582,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               elem=highestParentVec,
               doConvertIntfVec=true,
             )
-          } else if (!svInterfaceVecFound.contains(node)) {
+          } else /*if (!svInterfaceVecFound.contains(node))*/ {
             val genericFlat = node.genericElements
 
             val t = if (genericFlat.nonEmpty) {
