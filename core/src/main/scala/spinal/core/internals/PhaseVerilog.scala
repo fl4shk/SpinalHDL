@@ -680,7 +680,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                   getElemName(
                     node=tempIFparent,
                     cache=tempIFparent.elementsCache,
-                    name=""
+                    name=name
                   )
                 )
                 println(
