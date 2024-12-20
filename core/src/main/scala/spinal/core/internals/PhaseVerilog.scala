@@ -1058,12 +1058,15 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         //val IFlist = node.rootIFList()
         def innerFunc(
           someNode: Data,
-          IFlist: List[Interface],
+          //IFlist: List[Interface],
         ): Unit = {
-          //val IFlist = someNode.rootIFList()
-          if (IFlist.size == 0) {
+          val IFlist = someNode.rootIFList()
+          if (IFlist.size == 0 || IFlist == Nil) {
             return
           }
+          println(
+            s"${IFlist.size}"
+          )
           val newName = IFlist match {
             case head :: tail => tail.foldLeft((head, List(head.getName()))){case ((nowIf, nameList), someNode) =>
               //(someNode, nowIf.elementsCache.find(_._2 == someNode).get._1 :: nameList)//TODO:error handle on find.get
@@ -1105,12 +1108,12 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           someNode.name = newName
           innerFunc(
             someNode=IFlist(0),
-            IFlist=IFlist.slice(1, IFlist.size)
+            //IFlist=IFlist.slice(1, IFlist.size)
           )
         }
         innerFunc(
           someNode=node,
-          IFlist=node.rootIFList(),
+          //IFlist=node.rootIFList(),
         )
         //def outerFunc(
         //  //someNode: Data
