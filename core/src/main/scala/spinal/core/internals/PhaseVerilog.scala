@@ -412,7 +412,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                       assert(false)
                     }
                     case None => {
-                      vecChainArr.preprend(nodeVec)
+                      vecChainArr.prepend(nodeVec)
                     }
                   }
                 }
