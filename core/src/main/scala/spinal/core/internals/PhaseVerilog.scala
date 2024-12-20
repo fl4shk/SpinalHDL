@@ -405,11 +405,14 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                     return CmpResultKind.Diff
                   }
                 }
-                if (vecChainArr != null) {
+                if (
+                  vecChainArr != null) {
                   //vecSizeArr += nodeVec.size
                   vecChainArr.find(_ == nodeVec) match {
                     case Some(_) => {
-                      assert(false)
+                      if (vecChainArr.size > 1) {
+                        assert(false)
+                      }
                     }
                     case None => {
                       vecChainArr.prepend(nodeVec)
