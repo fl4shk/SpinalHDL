@@ -1106,18 +1106,28 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           //    myGetElemName(IFlist.last.elementsCache, "").getOrElse("no_name", null)._1//TODO:error handle on find.get
           //}
           var newName: String = ""
-          for ((intf, intfIdx) <- IFlist.view.zipWithIndex) {
+          for ((intf, intfIdx) <- IFlist.reverse.view.zipWithIndex) {
             val tempNode: Data = (
-              if (intfIdx == IFlist.size - 1) (
+              if (intfIdx == IFlist.view.size - 1) (
                 someNode
               ) else (
-                IFlist.view(intfIdx + 1)
+                IFlist.reverse.view(intfIdx + 1)
               )
             )
             newName = (
-              newName + "." + getElemName(
-                tempNode, intf.elementsCache, ""
-              ).getOrElse("no_name", null)._1
+              newName
+              + (
+                if (intfIdx == 0) (
+                  "."
+                ) else (
+                  ""
+                )
+              )
+              + (
+                getElemName(
+                  tempNode, intf.elementsCache, ""
+                ).getOrElse("no_name", null)._1
+              )
             )
           }
           someNode.name = newName
