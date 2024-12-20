@@ -475,10 +475,21 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             if (
               node.noConvertSVIFvec || svInterfaceVecFound.contains(node) || someNode.parent == null
             ) {
+              println(
+                s"test: ${node.getName()}"
+              )
+              if (svInterfaceVecFound.contains(node)) {
+                println(
+                  s"apparently already handled this one: ${node.getName()}"
+                )
+              }
             } else {
               someNode.parent match {
                 case parentVec: Vec[_] => {
                   var found: Boolean = false
+                  println(
+                    s"getHighestParentVec(): ${someNode.getName()} ${parentVec.size}"
+                  )
                   for ((elem, idx) <- parentVec.zipWithIndex) {
                     svInterfaceVecFound += elem
                     if (elem == someNode) {
@@ -486,7 +497,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                     }
                   }
                   if (found) {
-                    getHighestParentVec(someNode=someNode.parent)
+                    return getHighestParentVec(someNode=someNode.parent)
                   }
                 }
                 case _ => 
@@ -497,6 +508,15 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           val highestParentVec: Data = getHighestParentVec(node)
           if (highestParentVec != node) {
             svInterfaceVecFound += node
+            highestParentVec match {
+              case vec: Vec[_] => {
+                println(
+                  s"highestParentVec != node: "
+                  + s"${vec.getName()}"
+                )
+              }
+              case _ =>
+            }
             genSig(
               ret=ret,
               name=name,
