@@ -1055,60 +1055,75 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           someNode: Data,
           //IFlist: List[Interface],
         ): Unit = {
-          @inline def myGetElemName(
-            cache: ArrayBuffer[(String, Data)], name: String
-          ): Option[(String, Data)] = {
-            getElemName(someNode, cache, name)
-          }
+          //@inline def myGetElemName(
+          //  cache: ArrayBuffer[(String, Data)], name: String
+          //): Option[(String, Data)] = {
+          //  getElemName(someNode, cache, name)
+          //}
           val IFlist = someNode.rootIFList()
-          if (IFlist.size == 0 || IFlist == Nil) {
-            return
-          }
+          //if (IFlist.size == 0 || IFlist == Nil) {
+          //  return
+          //}
           //println(
           //  s"${IFlist.size}"
           //)
-          val newName = IFlist match {
-            case head :: tail => tail.foldLeft((head, List(head.getName()))){case ((nowIf, nameList), someNode) =>
-              //(someNode, nowIf.elementsCache.find(_._2 == someNode).get._1 :: nameList)//TODO:error handle on find.get
-              nowIf.elementsCache.find(current => (
-                current._2 == someNode
-                //|| current._2.getName() == someNode.getName()
-              )) match {
-                case Some(pair) => {
-                  (someNode, pair._1 :: nameList)
-                }
-                case None => {
-                  println(
-                    s"Interface someNode: "
-                    + s"${someNode.getName()} ${someNode.getClass.getSimpleName}; "
-                    + s"${someNode.definitionName} "
-                  )
-                  //someNode match {
-                  //  case interface: Interface => {
-                  //  }
-                  //  //case data: Data => {
-                  //  //  println(
-                  //  //    s"Data someNode: "
-                  //  //    + s"${data.getName()} ${data.getClass.getSimpleName}; "
-                  //  //  )
-                  //  //}
-                  //  case _ => {
-                  //    println(
-                  //      s"unknown someNode type: "
-                  //      + s"${someNode.getName()} ${someNode.getClass.getSimpleName}"
-                  //    )
-                  //  }
-                  //}
-                  (someNode, someNode.getName() :: nameList)
-                }
-              }
-            }._2.reverse.reduce(_ + "." + _) + "." +
-              myGetElemName(IFlist.last.elementsCache, "").getOrElse("no_name", null)._1//TODO:error handle on find.get
+          //val newName = IFlist match {
+          //  case head :: tail => tail.foldLeft((head, List(head.getName()))){case ((nowIf, nameList), someNode) =>
+          //    //(someNode, nowIf.elementsCache.find(_._2 == someNode).get._1 :: nameList)//TODO:error handle on find.get
+          //    nowIf.elementsCache.find(current => (
+          //      current._2 == someNode
+          //      //|| current._2.getName() == someNode.getName()
+          //    )) match {
+          //      case Some(pair) => {
+          //        (someNode, pair._1 :: nameList)
+          //      }
+          //      case None => {
+          //        println(
+          //          s"Interface someNode: "
+          //          + s"${someNode.getName()} ${someNode.getClass.getSimpleName}; "
+          //          + s"${someNode.definitionName} "
+          //        )
+          //        //someNode match {
+          //        //  case interface: Interface => {
+          //        //  }
+          //        //  //case data: Data => {
+          //        //  //  println(
+          //        //  //    s"Data someNode: "
+          //        //  //    + s"${data.getName()} ${data.getClass.getSimpleName}; "
+          //        //  //  )
+          //        //  //}
+          //        //  case _ => {
+          //        //    println(
+          //        //      s"unknown someNode type: "
+          //        //      + s"${someNode.getName()} ${someNode.getClass.getSimpleName}"
+          //        //    )
+          //        //  }
+          //        //}
+          //        (someNode, someNode.getName() :: nameList)
+          //      }
+          //    }
+          //  }._2.reverse.reduce(_ + "." + _) + "." +
+          //    myGetElemName(IFlist.last.elementsCache, "").getOrElse("no_name", null)._1//TODO:error handle on find.get
+          //}
+          var newName: String = ""
+          for ((intf, intfIdx) <- IFlist.view.zipWithIndex) {
+            val tempNode: Data = (
+              if (intfIdx == IFlist.size - 1) (
+                someNode
+              ) else (
+                IFlist.view(intfIdx + 1)
+              )
+            )
+            newName = (
+              newName + "." + getElemName(
+                tempNode, intf.elementsCache, ""
+              ).getOrElse("no_name", null)._1
+            )
           }
           someNode.name = newName
-          innerFunc(
-            someNode=IFlist.last,
-          )
+          //innerFunc(
+          //  someNode=IFlist.last,
+          //)
         }
         innerFunc(
           someNode=node,
