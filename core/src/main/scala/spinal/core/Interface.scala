@@ -48,7 +48,7 @@ class Interface extends Bundle {
   var origDefinitionName: String = null//this.getClass.getSimpleName
   var thisIsNotSVModport = false
   var thisIsNotSVIF = false
-  var noConvertSVIFvec = true
+  var noConvertSVIFvec = false
   /** Set the definition name of the component */
   def setDefinitionName(name: String): this.type = {
     definitionName = name
