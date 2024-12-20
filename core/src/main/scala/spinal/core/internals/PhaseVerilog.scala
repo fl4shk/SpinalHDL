@@ -999,6 +999,133 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     }
     //--------
     //--------
+    //val svIntfRoot = mutable.LinkedHashSet[Interface]()
+    def mkNewGraph(
+      interface: Interface,
+    ): SvifGraph = {
+      return new SvifGraph(
+        intfSet={
+          val intfSet = mutable.LinkedHashSet[Interface]()
+          intfSet += interface
+          intfSet
+        },
+      )
+    }
+    val svIntfWalkDataMap = mutable.HashMap[String, mutable.HashSet[Interface]]()
+    //println(
+    //  s"creating nodeWalkDataMap etc." 
+    //)
+    //var maxRootIFListSize: Int = 0
+    def updateWalkData(
+      nodeData: Data
+    ): Unit = {
+      def doAppend(someIntf: Interface): Unit = {
+        svIntfWalkDataMap.get(someIntf.origDefinitionName) match {
+          case Some(intfSet) => {
+            intfSet += someIntf
+          }
+          case None => {
+            val intfSet = mutable.HashSet[Interface]()
+            intfSet += someIntf
+            svIntfWalkDataMap += (someIntf.origDefinitionName -> intfSet)
+          }
+        }
+      }
+      nodeData match {
+        case nodeIntf: Interface => {
+          nodeIntf.origDefinitionName = nodeIntf.definitionName
+          doAppend(someIntf=nodeIntf)
+          if (nodeIntf.elementsCache != null) {
+            for ((name, elem) <- nodeIntf.elementsCache) {
+              updateWalkData(nodeData=elem)
+            }
+          }
+        }
+        case nodeVec: Vec[_] => {
+          for (vecIdx <- 0 until nodeVec.size) {
+            updateWalkData(nodeVec(vecIdx))
+          }
+        }
+        case _ =>
+      }
+    }
+    walkDeclarations {
+      case node: BaseType if(node.hasTag(IsInterface)) => {
+        val rootIF = node.rootIF()
+        if (!svRootIntfFound.contains(rootIF)) {
+          svRootIntfFound += rootIF
+          //--------
+          updateWalkData(nodeData=rootIF)
+        }
+      }
+      case _ =>
+    }
+    def doUpdateSvifGraph(
+      nodeOdn: String,
+      nodeIntf: Interface,
+      nodeGraph: SvifGraph,
+      //nodeIntfSet: mutable.HashSet[Interface],
+    ): Unit = {
+      def innerUpdate(
+        nodeIntf: Interface,
+        otherNodeIntf: Interface,
+      ): Boolean = {
+        val cmpResult = doCompare(
+          nodeData=nodeIntf,
+          otherNodeData=otherNodeIntf,
+        )
+        cmpResult match {
+          case CmpResultKind.Same => {
+            return true
+          }
+          case CmpResultKind.Diff => {
+            return false
+          }
+          case CmpResultKind.Other => {
+            assert(false)
+            return false
+          }
+        }
+      }
+      //assert(!nodeGraph.intfSet.contains(nodeIntf))
+      if (innerUpdate(
+        nodeIntf=nodeIntf,
+        otherNodeIntf=nodeGraph.anyIntf,
+      )) {
+        nodeGraph.intfSet += nodeIntf
+        return
+      } else if (nodeGraph.child != null) {
+        doUpdateSvifGraph(
+          nodeOdn=nodeOdn,
+          nodeIntf=nodeIntf,
+          nodeGraph=nodeGraph.child,
+        )
+      } else {
+        nodeGraph.addChild(
+          mkNewGraph(interface=nodeIntf)
+        )
+      }
+    }
+    for ((nodeOdn, nodeIntfSet) <- svIntfWalkDataMap.view) {
+      for (nodeIntf <- nodeIntfSet.view) {
+        svIntfGraphMap.get(nodeOdn) match {
+          case Some(graphRoot) => {
+            doUpdateSvifGraph(
+              nodeOdn=nodeOdn,
+              nodeIntf=nodeIntf,
+              nodeGraph=graphRoot
+              //nodeIntfSet=nodeIntfSet,
+            )
+          }
+          case None => {
+            svIntfGraphMap += (
+              nodeOdn -> mkNewGraph(interface=nodeIntf)
+            )
+          }
+        }
+      }
+    }
+    //--------
     walkDeclarations {
       case node: BaseType if (node.hasTag(IsInterface)) => {
         //last match {
@@ -1170,6 +1297,13 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               )
               prevIntf = intf
             }
+            if (intfIdx == IFlist.view.size - 1) {
+              newName = (
+                intf.getName()
+                + "."
+                + newName
+              )
+            }
           }
           someNode.name = newName
           //innerFunc(
@@ -1187,132 +1321,6 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         //}
       }
       case _ =>
-    }
-    //val svIntfRoot = mutable.LinkedHashSet[Interface]()
-    def mkNewGraph(
-      interface: Interface,
-    ): SvifGraph = {
-      return new SvifGraph(
-        intfSet={
-          val intfSet = mutable.LinkedHashSet[Interface]()
-          intfSet += interface
-          intfSet
-        },
-      )
-    }
-    val svIntfWalkDataMap = mutable.HashMap[String, mutable.HashSet[Interface]]()
-    //println(
-    //  s"creating nodeWalkDataMap etc." 
-    //)
-    //var maxRootIFListSize: Int = 0
-    def updateWalkData(
-      nodeData: Data
-    ): Unit = {
-      def doAppend(someIntf: Interface): Unit = {
-        svIntfWalkDataMap.get(someIntf.origDefinitionName) match {
-          case Some(intfSet) => {
-            intfSet += someIntf
-          }
-          case None => {
-            val intfSet = mutable.HashSet[Interface]()
-            intfSet += someIntf
-            svIntfWalkDataMap += (someIntf.origDefinitionName -> intfSet)
-          }
-        }
-      }
-      nodeData match {
-        case nodeIntf: Interface => {
-          nodeIntf.origDefinitionName = nodeIntf.definitionName
-          doAppend(someIntf=nodeIntf)
-          if (nodeIntf.elementsCache != null) {
-            for ((name, elem) <- nodeIntf.elementsCache) {
-              updateWalkData(nodeData=elem)
-            }
-          }
-        }
-        case nodeVec: Vec[_] => {
-          for (vecIdx <- 0 until nodeVec.size) {
-            updateWalkData(nodeVec(vecIdx))
-          }
-        }
-        case _ =>
-      }
-    }
-    walkDeclarations {
-      case node: BaseType if(node.hasTag(IsInterface)) => {
-        val rootIF = node.rootIF()
-        if (!svRootIntfFound.contains(rootIF)) {
-          svRootIntfFound += rootIF
-          //--------
-          updateWalkData(nodeData=rootIF)
-        }
-      }
-      case _ =>
-    }
-    def doUpdateSvifGraph(
-      nodeOdn: String,
-      nodeIntf: Interface,
-      nodeGraph: SvifGraph,
-      //nodeIntfSet: mutable.HashSet[Interface],
-    ): Unit = {
-      def innerUpdate(
-        nodeIntf: Interface,
-        otherNodeIntf: Interface,
-      ): Boolean = {
-        val cmpResult = doCompare(
-          nodeData=nodeIntf,
-          otherNodeData=otherNodeIntf,
-        )
-        cmpResult match {
-          case CmpResultKind.Same => {
-            return true
-          }
-          case CmpResultKind.Diff => {
-            return false
-          }
-          case CmpResultKind.Other => {
-            assert(false)
-            return false
-          }
-        }
-      }
-      //assert(!nodeGraph.intfSet.contains(nodeIntf))
-      if (innerUpdate(
-        nodeIntf=nodeIntf,
-        otherNodeIntf=nodeGraph.anyIntf,
-      )) {
-        nodeGraph.intfSet += nodeIntf
-        return
-      } else if (nodeGraph.child != null) {
-        doUpdateSvifGraph(
-          nodeOdn=nodeOdn,
-          nodeIntf=nodeIntf,
-          nodeGraph=nodeGraph.child,
-        )
-      } else {
-        nodeGraph.addChild(
-          mkNewGraph(interface=nodeIntf)
-        )
-      }
-    }
-    for ((nodeOdn, nodeIntfSet) <- svIntfWalkDataMap.view) {
-      for (nodeIntf <- nodeIntfSet.view) {
-        svIntfGraphMap.get(nodeOdn) match {
-          case Some(graphRoot) => {
-            doUpdateSvifGraph(
-              nodeOdn=nodeOdn,
-              nodeIntf=nodeIntf,
-              nodeGraph=graphRoot
-              //nodeIntfSet=nodeIntfSet,
-            )
-          }
-          case None => {
-            svIntfGraphMap += (
-              nodeOdn -> mkNewGraph(interface=nodeIntf)
-            )
-          }
-        }
-      }
     }
 
     def lastPasses(graph: SvifGraph, mode: Int): Unit = {
