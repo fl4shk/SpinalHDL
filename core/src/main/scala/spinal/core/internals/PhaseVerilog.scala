@@ -520,13 +520,14 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           shouldStopFunc=(
             (otherNode) => otherNode match {
               case otherIntf: Interface if (
-                !otherIntf.thisIsNotSVIF && !otherIntf.noConvertSVIFvec
+                !(!otherIntf.thisIsNotSVIF && !otherIntf.noConvertSVIFvec)
               ) => false
               case _ => true
             }
           )
         )
         if (myParentVec != x) {
+          // TODO: don't always convert `Vec[Interface]`s!
           if(x == node) Some((s"${name}[${a}]".stripPrefix("_"), x)) else None
         } else {
           if(x == node) Some((s"${name}_${a}".stripPrefix("_"), x)) else None
