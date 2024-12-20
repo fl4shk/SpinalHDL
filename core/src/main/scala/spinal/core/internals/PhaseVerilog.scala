@@ -495,7 +495,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             return someNode
           }
           val highestParentVec: Data = getHighestParentVec(node)
-          if (highestParentVec == node) {
+          if (highestParentVec != node) {
             svInterfaceVecFound += node
             genSig(
               ret=ret,
@@ -587,7 +587,8 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               case intf: Interface => {
                 genSig(ret, (parentName + intfDimString), intf, parentName)
               }
-              case _ =>
+              case _ => {
+              }
             }
           } else {
             for ((node, idx) <- nodes.zipWithIndex) {
