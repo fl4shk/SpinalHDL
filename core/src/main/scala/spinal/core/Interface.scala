@@ -134,6 +134,7 @@ class Interface extends Bundle {
           }
           case ref: Vec[_] => {
             if(OwnableRef.proposal(ref, this)) ref.setPartialName(name, Nameable.DATAMODEL_WEAK)
+            ref.setElementsParents()
             ref.zipWithIndex.foreach{case (node, idx) =>
               valCallbackRec(node, s"${name}_${idx}")
             }
