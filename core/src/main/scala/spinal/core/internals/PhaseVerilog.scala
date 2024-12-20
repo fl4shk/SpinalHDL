@@ -650,7 +650,11 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           }
           if (haveAllSameIntf && vecChainArr.size > 0) {
             //genBase(ret, name, "0", nodes(0), nodes.size)
-            val intfDimString = vecChainArr.flatMap(vec => s"[${vec.size}]")
+            //val intfDimString = vecChainArr.map(vec => s"[${vec.size}]")
+            var intfDimString: String = ""
+            for (vec <- vecChainArr) {
+              intfDimString = intfDimString + s"[${vec.size}]"
+            }
             //val intfNode = vecChainArr.map(vec => vec(0))
             //def getIntfNode(
             //  currChain: Data,
