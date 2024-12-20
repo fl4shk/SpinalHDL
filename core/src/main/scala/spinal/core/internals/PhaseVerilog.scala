@@ -512,7 +512,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             if (
               !convertIntfVec
               || node.noConvertSVIFvec
-              //|| svInterfaceVecFound.contains(node)
+              || svInterfaceVecFound.contains(someNode)
               || someNode.IFvecParent == null
             ) {
               //println(
