@@ -625,7 +625,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         }
         case nodes: Vec[_] => {
           var haveAllSameIntf: Boolean = doConvertIntfVec //!interface.noConvertSVIFvec
-          val vecChainArr = mutable.ArrayBuffer[Vec[_]]()
+          val vecChainArrReverse = mutable.ArrayBuffer[Vec[_]]()
           if (haveAllSameIntf) {
             for (idx <- 0 until nodes.size) {
               //println(
@@ -638,7 +638,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                   otherNodeData=nodes(idx - 1),
                   vecChainArr=(
                     if (idx == 1) (
-                      vecChainArr
+                      vecChainArrReverse
                     ) else (
                       null
                     )
@@ -652,7 +652,8 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               }
             }
           }
-          if (haveAllSameIntf && vecChainArr.size > 0) {
+          if (haveAllSameIntf && vecChainArrReverse.size > 0) {
+            val vecChainArr = vecChainArrReverse.reverse
             for ((chainVec, chainIdx) <- vecChainArr.view.zipWithIndex) {
               for ((vecElem, vecElemIdx) <- chainVec.zipWithIndex) {
                 vecElem match {
