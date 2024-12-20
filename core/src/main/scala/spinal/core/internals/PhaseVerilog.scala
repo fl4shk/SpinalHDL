@@ -346,7 +346,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                                 assert(false)
                               }
                               case None => {
-                                vecChainArr += vecParent
+                                vecChainArr.prepend(vecParent)
                               }
                             }
                           }
@@ -412,7 +412,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                       assert(false)
                     }
                     case None => {
-                      vecChainArr += nodeVec
+                      vecChainArr.preprend(nodeVec)
                     }
                   }
                 }
@@ -625,7 +625,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         }
         case nodes: Vec[_] => {
           var haveAllSameIntf: Boolean = doConvertIntfVec //!interface.noConvertSVIFvec
-          val vecChainArrReverse = mutable.ArrayBuffer[Vec[_]]()
+          val vecChainArr = mutable.ArrayBuffer[Vec[_]]()
           if (haveAllSameIntf) {
             for (idx <- 0 until nodes.size) {
               //println(
@@ -638,7 +638,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                   otherNodeData=nodes(idx - 1),
                   vecChainArr=(
                     if (idx == 1) (
-                      vecChainArrReverse
+                      vecChainArr
                     ) else (
                       null
                     )
@@ -652,8 +652,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               }
             }
           }
-          if (haveAllSameIntf && vecChainArrReverse.size > 0) {
-            val vecChainArr = vecChainArrReverse.reverse
+          if (haveAllSameIntf && vecChainArr.size > 0) {
             for ((chainVec, chainIdx) <- vecChainArr.view.zipWithIndex) {
               for ((vecElem, vecElemIdx) <- chainVec.zipWithIndex) {
                 vecElem match {
