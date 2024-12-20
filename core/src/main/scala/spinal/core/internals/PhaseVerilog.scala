@@ -675,9 +675,10 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                     }
                   }
                 )
+                //var elemName = intf 
                 val elemName = (
                   getElemName(
-                    node=intf,
+                    node=tempIFparent,
                     cache=tempIFparent.elementsCache,
                     name=""
                   )
