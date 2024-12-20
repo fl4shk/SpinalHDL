@@ -229,7 +229,7 @@ class Interface extends Bundle {
   }
   def doConvertSVIFvec(): Unit = {
     this.elementsCache.foreach{
-      case (name, x: Interface) => doConvertSVIFvec()
+      case (name, x: Interface) => x.doConvertSVIFvec()
       case _ =>
     }
     this.noConvertSVIFvec = false
