@@ -1045,11 +1045,6 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         //  }
         //  case _ =>
         //}
-        def myGetElemName(
-          cache: ArrayBuffer[(String, Data)], name: String
-        ): Option[(String, Data)] = {
-          getElemName(node, cache, name)
-        }
         val rootIF = node.rootIF()
         if(!allocated.contains(rootIF)) {
           rootIF.setName(node.component.localNamingScope.allocateName(rootIF.getName()))
@@ -1060,17 +1055,21 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           someNode: Data,
           //IFlist: List[Interface],
         ): Unit = {
+          @inline def myGetElemName(
+            cache: ArrayBuffer[(String, Data)], name: String
+          ): Option[(String, Data)] = {
+            getElemName(someNode, cache, name)
+          }
           val IFlist = someNode.rootIFList()
           if (IFlist.size == 0 || IFlist == Nil) {
             return
           }
-          innerFunc(
-            someNode=IFlist.last,
-            //IFlist=IFlist.slice(1, IFlist.size)
-          )
           //println(
           //  s"${IFlist.size}"
           //)
+          innerFunc(
+            someNode=IFlist.last,
+          )
           val newName = IFlist match {
             case head :: tail => tail.foldLeft((head, List(head.getName()))){case ((nowIf, nameList), someNode) =>
               //(someNode, nowIf.elementsCache.find(_._2 == someNode).get._1 :: nameList)//TODO:error handle on find.get
