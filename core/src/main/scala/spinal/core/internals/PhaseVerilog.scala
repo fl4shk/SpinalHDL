@@ -665,6 +665,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             //  } else {
             //  }
             //}
+            val elemName = vecChainArr(0).IFvecNamePrefix
             vecChainArr.last(0) match {
               case intf: Interface => {
                 val tempIFparent: Interface = (
@@ -676,19 +677,19 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                   }
                 )
                 //var elemName = intf 
-                val elemName = (
-                  getElemName(
-                    node=tempIFparent,
-                    cache=tempIFparent.elementsCache,
-                    name=name
-                  )
-                )
+                //val elemName = (
+                //  getElemName(
+                //    node=tempIFparent,
+                //    cache=tempIFparent.elementsCache,
+                //    name=name
+                //  )
+                //)
                 println(
                   s"adding vector elements:"
                   + s"${intf.getName()} ${intf.origDefinitionName}; "
                   + s"${elemName} ${intfDimString}"
                 )
-                genSig(ret, (name + intfDimString), intf)
+                genSig(ret, (elemName + intfDimString), intf)
               }
               case _ => {
               }

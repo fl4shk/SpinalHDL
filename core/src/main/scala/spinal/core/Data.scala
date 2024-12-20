@@ -295,6 +295,7 @@ trait Data extends ContextUser with NameableByComponent with Assignable with Spi
 
   var parent: Data = null
   var IFvecParent: Data = null
+  var IFvecNamePrefix: String = null
   def IFparent: Data = parent//TODO:Vec elem do not have parent
   def getRootParent: Data = if(parent == null) this else parent.getRootParent
 
