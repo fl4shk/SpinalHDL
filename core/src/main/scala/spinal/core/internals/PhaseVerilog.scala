@@ -1168,6 +1168,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                 //  tempName
                 //}
               )
+              prevIntf = intf
             }
           }
           someNode.name = newName
