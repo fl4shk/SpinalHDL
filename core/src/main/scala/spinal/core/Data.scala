@@ -294,6 +294,7 @@ trait Data extends ContextUser with NameableByComponent with Assignable with Spi
   private[core] def isSuffix = parent != null && parent.isInstanceOf[Suffixable]
 
   var parent: Data = null
+  var IFvecParent: Data = null
   def IFparent: Data = parent//TODO:Vec elem do not have parent
   def getRootParent: Data = if(parent == null) this else parent.getRootParent
 

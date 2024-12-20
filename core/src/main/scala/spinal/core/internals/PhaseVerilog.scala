@@ -473,7 +473,9 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             //lastRoot: Data,
           ): Data = {
             if (
-              node.noConvertSVIFvec || svInterfaceVecFound.contains(node) || someNode.parent == null
+              node.noConvertSVIFvec
+              || svInterfaceVecFound.contains(node)
+              || someNode.IFvecParent == null
             ) {
               println(
                 s"test: ${node.getName()}"
@@ -489,7 +491,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                 )
               }
             } else {
-              someNode.parent match {
+              someNode.IFvecParent match {
                 case parentVec: Vec[_] => {
                   var found: Boolean = false
                   println(
@@ -502,14 +504,14 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                     }
                   }
                   if (found) {
-                    return getHighestParentVec(someNode=someNode.parent)
+                    return getHighestParentVec(someNode=someNode.IFvecParent)
                   }
                 }
                 case _ => {
                   println(
                     s"Had other kind of parent: "
                     + s"someNode:${someNode.getName()} "
-                    + s"${someNode.parent.getClass.getSimpleName}"
+                    + s"${someNode.IFvecParent.getClass.getSimpleName}"
                   )
                 }
               }
