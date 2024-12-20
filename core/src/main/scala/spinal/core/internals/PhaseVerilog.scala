@@ -520,7 +520,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           shouldStopFunc=(
             (otherNode) => otherNode match {
               case otherIntf: Interface if (
-                !(!otherIntf.thisIsNotSVIF && !otherIntf.noConvertSVIFvec)
+                (otherIntf.thisIsNotSVIF || otherIntf.noConvertSVIFvec)
               ) => false
               case _ => true
             }
