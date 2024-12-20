@@ -649,6 +649,21 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             }
           }
           if (haveAllSameIntf && vecChainArr.size > 0) {
+            for ((chainVec, chainIdx) <- vecChainArr.view.zipWithIndex) {
+              for ((vecElem, vecElemIdx) <- chainVec.zipWithIndex) {
+                vecElem match {
+                  case vecElem: Data => {
+                    svInterfaceVecFound += vecElem
+                  }
+                  case _ => {
+                    println(
+                      s"eek! chainVec:(${chainVec.getName()} ${chainVec.size}) ${vecElemIdx}"
+                    )
+                    assert(false)
+                  }
+                }
+              }
+            }
             //genBase(ret, name, "0", nodes(0), nodes.size)
             //val intfDimString = vecChainArr.map(vec => s"[${vec.size}]")
             var intfDimString: String = ""
