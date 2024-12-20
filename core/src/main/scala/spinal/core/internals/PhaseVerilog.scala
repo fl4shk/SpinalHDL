@@ -528,7 +528,11 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         )
         if (myParentVec != x) {
           // TODO: don't always convert `Vec[Interface]`s!
-          if(x == node) Some((s"${name}[${a}]".stripPrefix("_"), x)) else None
+          val temp = (s"${name}[${a}]", x)
+          println(
+            s"testificate: ${temp}"
+          )
+          if(x == node) Some(temp) else None
         } else {
           if(x == node) Some((s"${name}_${a}".stripPrefix("_"), x)) else None
         }
