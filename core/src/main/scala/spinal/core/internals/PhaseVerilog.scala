@@ -543,16 +543,17 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                   for ((elem, idx) <- parentVec.zipWithIndex) {
                     //if (node == someNode) {
                     //}
-                    //if (!svInterfaceVecFound.contains(elem)) {
+                    if (!svInterfaceVecFound.contains(elem)) {
                       svInterfaceVecFound += elem
                       if (elem == someNode) {
                         //svInterfaceVecFound += elem
                         found = true
                       }
-                    //}
+                    }
                   }
                   if (found) {
-                    return getHighestParentVec(someNode=someNode.IFvecParent)
+                    //return getHighestParentVec(someNode=someNode.IFvecParent)
+                    return parentVec
                   }
                 }
                 case _ => {
