@@ -389,11 +389,11 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                     nodeData=nodeVec(vecIdx),
                     otherNodeData=otherVec(vecIdx),
                     vecChainArr=(
-                      if (vecIdx == 0) (
-                        vecChainArr
-                      ) else (
+                      //if (vecIdx == 0) (
+                      //  vecChainArr
+                      //) else (
                         null
-                      )
+                      //)
                     ),
                     //atTop=false,
                     //parentsAreVecs=true,
