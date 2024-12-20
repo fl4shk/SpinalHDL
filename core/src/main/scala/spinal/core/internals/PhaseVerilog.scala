@@ -281,6 +281,46 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     case object Diff extends CmpResultKind
     case object Other extends CmpResultKind
   }
+  def outerDoCompareVec[
+    T <: Data
+  ](
+    nodes: Vec[T],
+    vecChainArr: mutable.ArrayBuffer[Vec[_]],
+    doConvertIntfVec: Boolean,
+  ): Boolean = {
+    var ret: Boolean = doConvertIntfVec
+    if (ret) {
+      if (nodes.size > 1) {
+        for (idx <- 0 until nodes.size) {
+          //println(
+          //  s"checking this one: "
+          //  + s"nodes(${idx}) ${nodes.getName()} ${nodes(idx).getName()}"
+          //)
+          if (idx > 0) {
+            doCompare(
+              nodeData=nodes(idx),
+              otherNodeData=nodes(idx - 1),
+              vecChainArr=(
+                if (idx == 1) (
+                  vecChainArr
+                ) else (
+                  null
+                )
+              ),
+            ) match {  //!= CmpResultKind.Same
+              case CmpResultKind.Same => 
+              case _ => {
+                ret = false
+              }
+            }
+          }
+        }
+      } else if (nodes.size == 1) {
+        vecChainArr += nodes
+      }
+    }
+    return ret
+  }
   def doCompare(
     nodeData: Data,
     otherNodeData: Data,
@@ -514,7 +554,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
       }
       case (a, x) => {
         val tempSvInterfaceVecFound = mutable.HashSet[Data]()
-        val myParentVec = getParentVec(
+        val myParentVec: Data = getParentVec(
           someNode=x,
           svInterfaceVecFound=tempSvInterfaceVecFound,
           shouldStopFunc=(
@@ -526,15 +566,23 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             }
           )
         )
+        def doDefault(): Option[(String, Data)] = (
+          if(x == node) Some((s"${name}_${a}".stripPrefix("_"), x)) else None
+        )
         if (myParentVec != x) {
-          // TODO: don't always convert `Vec[Interface]`s!
+          myParentVec match {
+            case vec: Vec[_] => {
+            }
+            case _ => {
+            }
+          }
           val temp = (s"${name}[${a}]", x)
           println(
             s"testificate: ${temp}"
           )
           if(x == node) Some(temp) else None
         } else {
-          if(x == node) Some((s"${name}_${a}".stripPrefix("_"), x)) else None
+          doDefault()
         }
       }
     }.headOption
@@ -670,34 +718,14 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           }
         }
         case nodes: Vec[_] => {
-          var haveAllSameIntf: Boolean = doConvertIntfVec //!interface.noConvertSVIFvec
+          //var haveAllSameIntf: Boolean = doConvertIntfVec //!interface.noConvertSVIFvec
           val vecChainArr = mutable.ArrayBuffer[Vec[_]]()
-          if (haveAllSameIntf) {
-            for (idx <- 0 until nodes.size) {
-              //println(
-              //  s"checking this one: "
-              //  + s"nodes(${idx}) ${nodes.getName()} ${nodes(idx).getName()}"
-              //)
-              if (idx > 0) {
-                doCompare(
-                  nodeData=nodes(idx),
-                  otherNodeData=nodes(idx - 1),
-                  vecChainArr=(
-                    if (idx == 1) (
-                      vecChainArr
-                    ) else (
-                      null
-                    )
-                  ),
-                ) match {  //!= CmpResultKind.Same
-                  case CmpResultKind.Same => 
-                  case _ => {
-                    haveAllSameIntf = false
-                  }
-                }
-              }
-            }
-          }
+          val haveAllSameIntf = outerDoCompareVec(
+            nodes=nodes,
+            vecChainArr=vecChainArr,
+            doConvertIntfVec=doConvertIntfVec,
+          )
+
           if (haveAllSameIntf && vecChainArr.size > 0) {
             for ((chainVec, chainIdx) <- vecChainArr.view.zipWithIndex) {
               for ((vecElem, vecElemIdx) <- chainVec.zipWithIndex) {
@@ -1027,46 +1055,68 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           rootIF.setName(node.component.localNamingScope.allocateName(rootIF.getName()))
           allocated += rootIF
         }
-        val IFlist = node.rootIFList()
-        val newName = IFlist match {
-          case head :: tail => tail.foldLeft((head, List(head.getName()))){case ((nowIf, nameList), node) =>
-            //(node, nowIf.elementsCache.find(_._2 == node).get._1 :: nameList)//TODO:error handle on find.get
-            nowIf.elementsCache.find(current => (
-              current._2 == node
-              //|| current._2.getName() == node.getName()
-            )) match {
-              case Some(pair) => {
-                (node, pair._1 :: nameList)
+        //val IFlist = node.rootIFList()
+        def innerFunc(
+          someNode: Data,
+          IFlist: List[Interface],
+        ): Unit = {
+          //val IFlist = someNode.rootIFList()
+          if (IFlist.size == 0) {
+            return
+          }
+          val newName = IFlist match {
+            case head :: tail => tail.foldLeft((head, List(head.getName()))){case ((nowIf, nameList), someNode) =>
+              //(someNode, nowIf.elementsCache.find(_._2 == someNode).get._1 :: nameList)//TODO:error handle on find.get
+              nowIf.elementsCache.find(current => (
+                current._2 == someNode
+                //|| current._2.getName() == someNode.getName()
+              )) match {
+                case Some(pair) => {
+                  (someNode, pair._1 :: nameList)
+                }
+                case None => {
+                  println(
+                    s"Interface someNode: "
+                    + s"${someNode.getName()} ${someNode.getClass.getSimpleName}; "
+                    + s"${someNode.definitionName} "
+                  )
+                  //someNode match {
+                  //  case interface: Interface => {
+                  //  }
+                  //  //case data: Data => {
+                  //  //  println(
+                  //  //    s"Data someNode: "
+                  //  //    + s"${data.getName()} ${data.getClass.getSimpleName}; "
+                  //  //  )
+                  //  //}
+                  //  case _ => {
+                  //    println(
+                  //      s"unknown someNode type: "
+                  //      + s"${someNode.getName()} ${someNode.getClass.getSimpleName}"
+                  //    )
+                  //  }
+                  //}
+                  (someNode, someNode.getName() :: nameList)
+                }
               }
-              case None => {
-                println(
-                  s"Interface node: "
-                  + s"${node.getName()} ${node.getClass.getSimpleName}; "
-                  + s"${node.definitionName} "
-                )
-                //node match {
-                //  case interface: Interface => {
-                //  }
-                //  //case data: Data => {
-                //  //  println(
-                //  //    s"Data node: "
-                //  //    + s"${data.getName()} ${data.getClass.getSimpleName}; "
-                //  //  )
-                //  //}
-                //  case _ => {
-                //    println(
-                //      s"unknown node type: "
-                //      + s"${node.getName()} ${node.getClass.getSimpleName}"
-                //    )
-                //  }
-                //}
-                (node, node.getName() :: nameList)
-              }
-            }
-          }._2.reverse.reduce(_ + "." + _) + "." +
-            myGetElemName(IFlist.last.elementsCache, "").getOrElse("no_name", null)._1//TODO:error handle on find.get
+            }._2.reverse.reduce(_ + "." + _) + "." +
+              myGetElemName(IFlist.last.elementsCache, "").getOrElse("no_name", null)._1//TODO:error handle on find.get
+          }
+          someNode.name = newName
+          innerFunc(
+            someNode=IFlist(0),
+            IFlist=IFlist.slice(1, IFlist.size)
+          )
         }
-        node.name = newName
+        innerFunc(
+          someNode=node,
+          IFlist=node.rootIFList(),
+        )
+        //def outerFunc(
+        //  //someNode: Data
+        //): Unit = {
+        //  val IFlist = someNode.rootIFList()
+        //}
       }
       case _ =>
     }
