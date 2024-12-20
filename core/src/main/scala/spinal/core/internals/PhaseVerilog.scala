@@ -1117,13 +1117,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             )
             newName = (
               newName
-              + (
-                if (intfIdx == 0) (
-                  "."
-                ) else (
-                  ""
-                )
-              )
+              + (if (intfIdx == 0) "." else "")
               + {
                 tempName = getElemName(
                   tempNode, intf.elementsCache, tempName
