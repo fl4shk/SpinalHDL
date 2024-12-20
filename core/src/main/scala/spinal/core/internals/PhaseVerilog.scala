@@ -478,6 +478,11 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               println(
                 s"test: ${node.getName()}"
               )
+              if (node.noConvertSVIFvec) {
+                println(
+                  s"have node.noConvertSVIFvec: ${node.getName()}"
+                )
+              }
               if (svInterfaceVecFound.contains(node)) {
                 println(
                   s"apparently already handled this one: ${node.getName()}"
@@ -500,7 +505,13 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                     return getHighestParentVec(someNode=someNode.parent)
                   }
                 }
-                case _ => 
+                case _ => {
+                  println(
+                    s"Had other kind of parent: "
+                    + s"someNode:${someNode.getName()} "
+                    + s"${someNode.parent.getClass.getSimpleName}"
+                  )
+                }
               }
             }
             return someNode
@@ -511,11 +522,16 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             highestParentVec match {
               case vec: Vec[_] => {
                 println(
-                  s"highestParentVec != node: "
-                  + s"${vec.getName()}"
+                  s"highestParentVec != node: have vec: "
+                  + s"${vec.getName()} ${vec.size}"
                 )
               }
-              case _ =>
+              case _ => {
+                println(
+                  s"highestParentVec != node: have other: "
+                  + s"${highestParentVec.getName()}"
+                )
+              }
             }
             genSig(
               ret=ret,
