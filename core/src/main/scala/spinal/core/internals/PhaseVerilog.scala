@@ -284,6 +284,8 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
   def doCompare(
     nodeData: Data,
     otherNodeData: Data,
+    //vecSizeArr: mutable.ArrayBuffer[Int]=null,
+    vecChainArr: mutable.ArrayBuffer[Vec[_]]=null,
   ): CmpResultKind = {
     //--------
     nodeData match {
@@ -294,8 +296,8 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           //}
           case otherIntf: Interface => {
             if (
-              emitInterface(nodeIntf, false).result()
-              == emitInterface(otherIntf, false).result()
+              emitInterface(nodeIntf).result()
+              == emitInterface(otherIntf).result()
             ) {
               if (nodeIntf.elementsCache != null && otherIntf.elementsCache != null) {
                 if (nodeIntf.elementsCache.size == otherIntf.elementsCache.size) {
@@ -361,11 +363,22 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                 val cmpResult = doCompare(
                   nodeData=nodeVec(vecIdx),
                   otherNodeData=otherVec(vecIdx),
+                  vecChainArr=(
+                    if (vecIdx == 0) (
+                      vecChainArr
+                    ) else (
+                      null
+                    )
+                  ),
                   //atTop=false,
                   //parentsAreVecs=true,
                 )
                 if (cmpResult != CmpResultKind.Same) {
                   //return false
+                  if (vecChainArr != null) {
+                    //vecSizeArr += nodeVec.size
+                    vecChainArr += nodeVec
+                  }
                   return CmpResultKind.Diff
                 }
               }
@@ -388,8 +401,21 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     assert(false)
     return null
   }
-  def emitInterface(interface: Interface, convertIntfVec: Boolean=true): StringBuilder = {
+  def getElemName(
+    node: Data, cache: ArrayBuffer[(String, Data)], name: String
+  ): Option[(String, Data)] = {
+    cache.flatMap{
+      case (a, x: Bundle) => getElemName(node, x.elementsCache, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
+      case (a, x: Vec[_]) => {
+        getElemName(node, x.elements, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
+      }
+      case (a, x) => if(x == node) Some((s"${name}_${a}".stripPrefix("_"), x)) else None
+    }.headOption
+  }
+  def emitInterface(interface: Interface): StringBuilder = {
     import pc._
+    val svInterfaceVecFound = mutable.HashSet[Data]()
+
     var ret = new StringBuilder()
     val theme = new Tab2 //TODO add into SpinalConfig
     val generic = if(interface.genericElements.isEmpty) ""
@@ -402,7 +428,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         }.reduce(_ + _).stripSuffix(",\n") + "\n) "
     ret ++= s"interface ${interface.definitionName} ${generic}() ;\n\n"
     val sizeZero = mutable.HashSet[String]()
-    def genBase[T <: Data](ret: StringBuilder, name: String, name1: String, elem: T, subIntfVecSize: Int): Unit = {
+    def genBase[T <: Data](ret: StringBuilder, name: String, name1: String, elem: T, parentName: String): Unit = {
       elem match {
         case _: Bool => {
           val size = ""
@@ -428,70 +454,115 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         case x => {
           genSig(
             ret,
-            if (subIntfVecSize == 0 || !convertIntfVec) (
-              s"${name}_${name1}"
-            ) else (
-              s"${name}[${subIntfVecSize}]"
-            ),
+            //if (subIntfVecSize == 0) (
+              s"${name}_${name1}",
+            //) else (
+            //  s"${name}[${subIntfVecSize}]"
+            //),
             x,
+            parentName,
           )
         }
       }
     }
-    def genSig[T <: Data](ret: StringBuilder, name: String, elem: T): Unit = {
+    def genSig[T <: Data](ret: StringBuilder, name: String, elem: T, parentName: String, doConvertIntfVec: Boolean=false): Unit = {
       elem match {
-        case node: Interface if !node.thisIsNotSVIF => {
+        case node: Interface if (!node.thisIsNotSVIF) => {
+          def getHighestParentVec(
+            someNode: Data,
+            //lastRoot: Data,
+          ): Data = {
+            if (
+              node.noConvertSVIFvec || svInterfaceVecFound.contains(node) || someNode.parent == null
+            ) {
+            } else {
+              someNode.parent match {
+                case parentVec: Vec[_] => {
+                  var found: Boolean = false
+                  for ((elem, idx) <- parentVec.zipWithIndex) {
+                    svInterfaceVecFound += elem
+                    if (elem == someNode) {
+                      found = true
+                    }
+                  }
+                  if (found) {
+                    getHighestParentVec(someNode=someNode.parent)
+                  }
+                }
+                case _ => 
+              }
+            }
+            return someNode
+          }
+          val highestParentVec: Data = getHighestParentVec(node)
+          if (highestParentVec == node) {
+            svInterfaceVecFound += node
+            genSig(
+              ret=ret,
+              name=name,
+              elem=highestParentVec,
+              parentName=parentName,
+              doConvertIntfVec=true,
+            )
+          } else {
+            val genericFlat = node.genericElements
 
-          val genericFlat = node.genericElements
-
-          val t = if (genericFlat.nonEmpty) {
-            val ret = genericFlat.map{ e =>
-              interface.IFGeneric.get((node, e._1)) match {
-                case Some(value) => e._1 -> value
-                case None => {
-                  e match {
-                    //TODO:case (name: String, bt: BaseType, _)      => name -> s"${emitExpression(bt.getTag(classOf[GenericValue]).get.e)}"
-                    case (name: String, rs: VerilogValues, _) => name -> s"${rs.v}"
-                    case (name: String, s: String, _)         => name -> s"""\"$s\""""
-                    case (name: String, i: Int, _)            => name -> s"$i"
-                    case (name: String, d: Double, _)         => name -> s"$d"
-                    case (name: String, b: Boolean, _)        => name -> s"${if(b) "1'b1" else "1'b0"}"
-                    case (name: String, b: BigInt, _)         => name -> s"${b.toString(16).size*4}'h${b.toString(16)}"
-                    case _                                 => SpinalError(s"The generic type ${"\""}${e._1} - ${e._2}${"\""} of the interface ${"\""}${node.definitionName}${"\""} is not supported in Verilog")
+            val t = if (genericFlat.nonEmpty) {
+              val ret = genericFlat.map{ e =>
+                interface.IFGeneric.get((node, e._1)) match {
+                  case Some(value) => e._1 -> value
+                  case None => {
+                    e match {
+                      //TODO:case (name: String, bt: BaseType, _)      => name -> s"${emitExpression(bt.getTag(classOf[GenericValue]).get.e)}"
+                      case (name: String, rs: VerilogValues, _) => name -> s"${rs.v}"
+                      case (name: String, s: String, _)         => name -> s"""\"$s\""""
+                      case (name: String, i: Int, _)            => name -> s"$i"
+                      case (name: String, d: Double, _)         => name -> s"$d"
+                      case (name: String, b: Boolean, _)        => name -> s"${if(b) "1'b1" else "1'b0"}"
+                      case (name: String, b: BigInt, _)         => name -> s"${b.toString(16).size*4}'h${b.toString(16)}"
+                      case _                                 => SpinalError(s"The generic type ${"\""}${e._1} - ${e._2}${"\""} of the interface ${"\""}${node.definitionName}${"\""} is not supported in Verilog")
+                    }
                   }
                 }
               }
-            }
-            val namelens = ret.map(_._1.size).max
-            val exprlens = ret.map(_._2.size).max
-            val params   = ret.map(t =>  s"    .%-${namelens}s (%-${exprlens}s )".format(t._1, t._2))
-            s"""${node.definitionName} #(
-               |${params.mkString(",\n")}
-               |  )""".stripMargin
-          } else f"${node.definitionName}%-15s"
-          val  cl = if(genericFlat.nonEmpty) "\n" else ""
-          ret ++= f"${theme.porttab}${t} ${name}();\n${cl}"//TODO:parameter
+              val namelens = ret.map(_._1.size).max
+              val exprlens = ret.map(_._2.size).max
+              val params   = ret.map(t =>  s"    .%-${namelens}s (%-${exprlens}s )".format(t._1, t._2))
+              s"""${node.definitionName} #(
+                |${params.mkString(",\n")}
+                |  )""".stripMargin
+            } else f"${node.definitionName}%-15s"
+            val  cl = if(genericFlat.nonEmpty) "\n" else ""
+            ret ++= f"${theme.porttab}${t} ${name}();\n${cl}"//TODO:parameter
+          }
         }
         case nodes: Bundle => {
           for ((name1, node) <- nodes.elementsCache) {
-            genBase(ret, name, name1, node, 0)
+            genBase(ret, name, name1, node, name)
           }
         }
         case nodes: Vec[_] => {
-          var haveAllSameIntf: Boolean = convertIntfVec
+          var haveAllSameIntf: Boolean = doConvertIntfVec //!interface.noConvertSVIFvec
+          val vecChainArr = mutable.ArrayBuffer[Vec[_]]()
           if (haveAllSameIntf) {
             for (idx <- 0 until nodes.size) {
               println(
                 s"checking this one: "
-                + s"nodes(${idx}) ${nodes(idx).getName()}"
+                + s"nodes(${idx}) ${nodes.getName()} ${nodes(idx).getName()}"
               )
               if (idx > 0) {
                 doCompare(
                   nodeData=nodes(idx),
                   otherNodeData=nodes(idx - 1),
+                  vecChainArr=(
+                    if (idx == 1) (
+                      vecChainArr
+                    ) else (
+                      null
+                    )
+                  ),
                 ) match {  //!= CmpResultKind.Same
-                  case CmpResultKind.Same => {
-                  }
+                  case CmpResultKind.Same => 
                   case _ => {
                     haveAllSameIntf = false
                   }
@@ -499,11 +570,28 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               }
             }
           }
-          if (haveAllSameIntf) {
-            genBase(ret, name, "0", nodes(0), nodes.size)
+          if (haveAllSameIntf && vecChainArr.size > 0) {
+            //genBase(ret, name, "0", nodes(0), nodes.size)
+            val intfDimString = vecChainArr.map(vec => s"[${vec.size}]")
+            //val intfNode = vecChainArr.map(vec => vec(0))
+            //def getIntfNode(
+            //  currChain: Data,
+            //  chainIdx: Int=0,
+            //): Data = {
+            //  if (chainIdx + 1 > vecChainArr.size) {
+            //    return currChain(0)
+            //  } else {
+            //  }
+            //}
+            vecChainArr.last(0) match {
+              case intf: Interface => {
+                genSig(ret, (parentName + intfDimString), intf, parentName)
+              }
+              case _ =>
+            }
           } else {
             for ((node, idx) <- nodes.zipWithIndex) {
-              genBase(ret, name, idx.toString, node, 0)
+              genBase(ret, name, idx.toString, node, name)
             }
           }
         }
@@ -531,7 +619,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
       }
     }
     for ((name, elem) <- interface.elementsCache) {
-      genSig(ret, name, elem)
+      genSig(ret, name, elem, name)
     }
     ret ++= "\n"
     if(pc.config.svInterfaceIncludeModport && !interface.thisIsNotSVModport) {
@@ -755,23 +843,17 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         //  }
         //  case _ =>
         //}
+        def myGetElemName(
+          cache: ArrayBuffer[(String, Data)], name: String
+        ): Option[(String, Data)] = {
+          getElemName(node, cache, name)
+        }
         val rootIF = node.rootIF()
         if(!allocated.contains(rootIF)) {
           rootIF.setName(node.component.localNamingScope.allocateName(rootIF.getName()))
           allocated += rootIF
         }
         val IFlist = node.rootIFList()
-        def getElemName(
-          cache: ArrayBuffer[(String, Data)], name: String
-        ): Option[(String, Data)] = {
-          cache.flatMap{
-            case (a, x: Bundle) => getElemName(x.elementsCache, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
-            case (a, x: Vec[_]) => {
-              getElemName(x.elements, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
-            }
-            case (a, x) => if(x == node) Some((s"${name}_${a}".stripPrefix("_"), x)) else None
-          }.headOption
-        }
         val newName = IFlist match {
           case head :: tail => tail.foldLeft((head, List(head.getName()))){case ((nowIf, nameList), node) =>
             //(node, nowIf.elementsCache.find(_._2 == node).get._1 :: nameList)//TODO:error handle on find.get
@@ -808,7 +890,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               }
             }
           }._2.reverse.reduce(_ + "." + _) + "." +
-            getElemName(IFlist.last.elementsCache, "").getOrElse("no_name", null)._1//TODO:error handle on find.get
+            myGetElemName(IFlist.last.elementsCache, "").getOrElse("no_name", null)._1//TODO:error handle on find.get
         }
         node.name = newName
       }
@@ -962,7 +1044,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         }
       } else if (mode == 1) {
         svInterface += (
-          graph.anyIntf.definitionName -> emitInterface(graph.anyIntf, true)
+          graph.anyIntf.definitionName -> emitInterface(graph.anyIntf)
         )
       }
       if (
