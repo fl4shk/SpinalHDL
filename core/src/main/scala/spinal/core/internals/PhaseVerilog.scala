@@ -537,11 +537,13 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                   //)
                   for ((elem, idx) <- parentVec.zipWithIndex) {
                     //if (node == someNode) {
-                      svInterfaceVecFound += elem
                     //}
-                    if (elem == someNode) {
-                      //svInterfaceVecFound += elem
-                      found = true
+                    if (!svInterfaceVecFound.contains(elem)) {
+                      svInterfaceVecFound += elem
+                      if (elem == someNode) {
+                        //svInterfaceVecFound += elem
+                        found = true
+                      }
                     }
                   }
                   if (found) {
