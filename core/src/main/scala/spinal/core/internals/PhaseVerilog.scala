@@ -691,9 +691,6 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     }
     ret ++= "\n"
     if(pc.config.svInterfaceIncludeModport && !interface.thisIsNotSVModport) {
-      if (interface.thisIsSVstruct) {
-        LocatedPendingError(s"interface ${interface.getName()} (with definitionName ${interface.definitionName}) is marked as a SystemVerilog struct, while also being marked as having modport")
-      }
       interface.allModPort
         .foreach{case x =>
           var modportString = new StringBuilder()
