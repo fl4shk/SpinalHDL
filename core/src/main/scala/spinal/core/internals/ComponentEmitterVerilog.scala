@@ -233,6 +233,7 @@ class ComponentEmitterVerilog(
               do {
                 tempName = tempName.stripSuffix("]")
               } while (tempName != tempName.stripSuffix("]"))
+              println(s"tempName: ${tempName}")
               tempName
             }
           ))
