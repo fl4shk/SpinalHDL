@@ -228,14 +228,14 @@ class Interface extends Bundle {
   def notSVModportthisLevel(): Unit = {
     this.thisIsNotSVModport = true
   }
-  def dontConvertVec(): Unit = {
+  def dontConvertSVIFvec(): Unit = {
     this.elementsCache.foreach{
-      case (name, x: Interface) => x.dontConvertVec()
+      case (name, x: Interface) => x.dontConvertSVIFvec()
       case _ =>
     }
     this.noConvertSVIFvec = true
   }
-  def dontConvertVecThisLevel(): Unit = {
+  def dontConvertSVIFvecThisLevel(): Unit = {
     this.noConvertSVIFvec = true
   }
 }
