@@ -48,8 +48,7 @@ class Interface extends Bundle {
   var origDefinitionName: String = null//this.getClass.getSimpleName
   var thisIsNotSVModport = false
   var thisIsNotSVIF = false
-  var thisIsSVstruct = false
-  var noConvertSVIFvec = false
+  var noConvertVec = false
   /** Set the definition name of the component */
   def setDefinitionName(name: String): this.type = {
     definitionName = name
@@ -165,6 +164,10 @@ class Interface extends Bundle {
   def callModPort(s: String): Unit = {
     this.getClass.getMethod(s).invoke(this).asInstanceOf[Unit]
   }
+  def innerCheckIODir(
+  ): List[String] = {
+    null
+  }
   def checkModport() = {
     allModPort
       .filter(x => {
@@ -215,7 +218,6 @@ class Interface extends Bundle {
     this.thisIsNotSVIF = true
   }
   def notSVModport(): Unit = {
-    //this.flattenForeach(x => x.removeTag(IsInterface))
     this.elementsCache.foreach{
       case (name, x: Interface) => x.notSVModport()
       case _ =>
@@ -224,20 +226,16 @@ class Interface extends Bundle {
   }
 
   def notSVModportthisLevel(): Unit = {
-    //this.elementsCache.foreach{case (name, x) => x match {
-    //  case s: BaseType => s.removeTag(IsInterface)
-    //  case _ =>
-    //}}
     this.thisIsNotSVModport = true
   }
-  def dontConvertSVIFvec(): Unit = {
+  def dontConvertVec(): Unit = {
     this.elementsCache.foreach{
-      case (name, x: Interface) => x.dontConvertSVIFvec()
+      case (name, x: Interface) => x.dontConvertVec()
       case _ =>
     }
-    this.noConvertSVIFvec = true
+    this.noConvertVec = true
   }
-  def dontConvertSVIFvecThisLevel(): Unit = {
-    this.noConvertSVIFvec = true
+  def dontConvertVecThisLevel(): Unit = {
+    this.noConvertVec = true
   }
 }
