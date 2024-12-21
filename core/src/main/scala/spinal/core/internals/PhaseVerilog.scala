@@ -729,6 +729,15 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
 
             def genModportSig[T <: Data](modportString: StringBuilder, name: String, elem: T): Unit = {
               elem match {
+                case elem: Interface if elem.thisIsSVstruct => {
+                  val dir = elem.dir match {
+                    case `in`    => "input "
+                    case `out`   => "output"
+                    case `inout` => "inout "
+                    case _       => throw new Exception(s"Unknown direction in interface ${interface}: ${elem}"); ""
+                  }
+                  modportString ++= f"${theme.porttab}${theme.porttab}${dir}%-15s ${name},\n"
+                }
                 case elem: Interface if !elem.thisIsNotSVIF => {
                   if (elem.thisIsSVstruct) {
                     LocatedPendingError(s"sv struct cannot contain sv modport")
@@ -741,15 +750,6 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                     elem.checkModport().head
                   }
                   modportString ++= f"${theme.porttab}${theme.porttab}.${name}(${name}.${modport}),\n"
-                }
-                case elem: Interface if elem.thisIsSVstruct => {
-                  val dir = elem.dir match {
-                    case `in`    => "input "
-                    case `out`   => "output"
-                    case `inout` => "inout "
-                    case _       => throw new Exception(s"Unknown direction in interface ${interface}: ${elem}"); ""
-                  }
-                  modportString ++= f"${theme.porttab}${theme.porttab}${dir}%-15s ${name},\n"
                 }
                 case elem: Bundle => {
                   for((name1, node) <- elem.elementsCache) {
