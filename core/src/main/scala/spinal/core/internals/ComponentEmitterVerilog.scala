@@ -1103,7 +1103,11 @@ class ComponentEmitterVerilog(
         |  )""".stripMargin
     } else f"${data.definitionName}%-19s"
     val  cl = if(genericFlat.nonEmpty) "\n" else ""
-    f"${theme.maintab}${t} ${name}();\n${cl}"
+    if (!data.thisIsSVstruct) (
+      f"${theme.maintab}${t} ${name}();\n${cl}"
+    ) else (
+      f"${theme.maintab}${t} ${name};\n${cl}"
+    )
   }
 
   def emitBaseTypeWrap(baseType: BaseType, name: String): String = {

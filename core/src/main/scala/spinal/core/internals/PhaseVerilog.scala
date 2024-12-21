@@ -621,7 +621,13 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                 |  )""".stripMargin
             } else f"${node.definitionName}%-15s"
             val  cl = if(genericFlat.nonEmpty) "\n" else ""
-            ret ++= f"${theme.porttab}${t} ${name}();\n${cl}"//TODO:parameter
+            ret ++= (
+              if (!node.thisIsSVstruct) {
+                f"${theme.porttab}${t} ${name}();\n${cl}"//TODO:parameter
+              } else {
+                f"${theme.porttab}${t} ${name};\n${cl}"
+              }
+            )
           }
         }
         case nodes: Bundle => {
