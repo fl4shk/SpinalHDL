@@ -1303,8 +1303,12 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         )
       }
     }
+    val svIntfGraphArr = mutable.ArrayBuffer[(String, SvifGraph)]()
+    for ((name, graph) <- svIntfGraphMap) {
+      svIntfGraphArr.prepend((name, graph))
+    }
     for (mode <- 0 to 2) {
-      for ((name, graph) <- svIntfGraphMap) {
+      for ((name, graph) <- svIntfGraphArr) {
         lastPasses(graph=graph, mode=mode)
       }
     }
