@@ -222,20 +222,8 @@ class ComponentEmitterVerilog(
             case s: Nameable => "_" + s.getName()
             case _ => ""
           }
-          val name =
-          component.localNamingScope.allocateName((
-            anonymSignalPrefix
-            + {
-              var tempName: String = (
-                sName.replace('.', '_').replace('[', '_')
-              )
-              var tempName1: String = tempName + ""
-              do {
-                tempName = tempName.stripSuffix("]")
-              } while (tempName != tempName.stripSuffix("]"))
-              println(s"tempName: ${tempName}")
-              tempName
-            }
+          val name = component.localNamingScope.allocateName((
+            anonymSignalPrefix + VerilogInterfaceNameGen(sName)
           ))
           declarations ++= emitExpressionWrap(e, name)
           wrappedExpressionToName(e) = name
@@ -744,7 +732,7 @@ class ComponentEmitterVerilog(
               declarations ++= s"    end\n"
               declarations ++= s"  endfunction\n"
 
-              val name = component.localNamingScope.allocateName(anonymSignalPrefix)
+              val name = VerilogInterfaceNameGen(component.localNamingScope.allocateName(anonymSignalPrefix))
               declarations ++= s"  wire ${emitType(node)} $name;\n"
               logics ++= s"  assign $name = ${funcName}(1'b0);\n"
 //              logics ++= s"  always @ ($name) ${emitReference(node, false)} = $name;\n"
@@ -1403,7 +1391,8 @@ end
 //            b ++= s"$tab${emitExpression(target)}[$upLim:$downLim] <= ${emitReference(mem,false)}_symbol$i[${emitExpression(address)}];\n"
 //          }
           val symboleReadDataNames = for(i <- 0 until symbolCount) yield {
-            val symboleReadDataName = component.localNamingScope.allocateName(anonymSignalPrefix + "_" + mem.getName() + "symbol_read")
+            val symboleReadDataName =
+            component.localNamingScope.allocateName(anonymSignalPrefix + "_" + VerilogInterfaceNameGen(mem.getName()) + "symbol_read")
             declarations ++= s"  reg [${mem.getMemSymbolWidth()-1}:0] $symboleReadDataName;\n"
             b ++= s"$tab$symboleReadDataName <= ${emitReference(mem,false)}_symbol$i[${emitExpression(address)}];\n"
             symboleReadDataName
@@ -1955,4 +1944,11 @@ end
   emitEntity()
   emitArchitecture()
 
+}
+object VerilogInterfaceNameGen {
+  def apply(
+    baseName: String
+  ): String = {
+    baseName.replace('.', '_').replace('[', '_').replace("]", "")
+  }
 }
