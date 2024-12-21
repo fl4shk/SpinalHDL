@@ -86,30 +86,37 @@ class ComponentEmitterVerilog(
       val comma      = ","
       val EDAcomment = s"${emitCommentAttributes(baseType.instanceAttributes)}"  //like "/* verilator public */"
 
-      if(baseType.hasTag(IsInterface) && spinalConfig.mode == SystemVerilog && spinalConfig.svInterface) {
+      if(
+        baseType.hasTag(IsInterface) && spinalConfig.mode == SystemVerilog
+        && spinalConfig.svInterface 
+      ) {
         val rootIF = baseType.rootIF()
         if(!declaredInterface.contains(rootIF)) {
           declaredInterface += rootIF
           val intName = rootIF.definitionName
           //TODO:check more than one modport has same `in` `out` direction
-          val tempModportCheck = (spinalConfig.svInterfaceIncludeModport && !rootIF.thisIsNotSVModport)
-          val modport = if(tempModportCheck) (
-            if(rootIF.checkModport().isEmpty) {
-              LocatedPendingError(s"no suitable modport found for ${baseType.parent}")
-              ""
+          val tempModportCheck = spinalConfig.svInterfaceIncludeModport && !rootIF.thisIsNotSVModport
+          if (tempModportCheck) {
+            val modport = (
+              if(rootIF.checkModport().isEmpty) {
+                LocatedPendingError(s"no suitable modport found for ${baseType.parent}")
+                ""
+              } else {
+                rootIF.checkModport().head
+              }
+            )
+            val tempModport = if(tempModportCheck) {
+              s".${modport}"
             } else {
-              rootIF.checkModport().head
+              s""
             }
-          ) else (
-            ""
-          )
-          val tempModport = if(tempModportCheck) {
-            s".${modport}"
-          } else {
-            s""
+            val intMod = s"${intName}${tempModport}"
+            portMaps += f"${intMod}%-20s ${rootIF.getName()}${EDAcomment}${comma}"
           }
-          val intMod = s"${intName}${tempModport}"
-          portMaps += f"${intMod}%-20s ${rootIF.getName()}${EDAcomment}${comma}"
+          if (rootIF.thisIsSVstruct) {
+            assert(!tempModportCheck)
+            portMaps += f"${syntax}${dir}%-20s ${rootIF.definitionName} ${rootIF.getName()}${EDAcomment}${comma}"
+          }
         }
       } else {
         if(outputsToBufferize.contains(baseType) || baseType.isInput){

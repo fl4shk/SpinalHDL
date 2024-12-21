@@ -508,15 +508,26 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
 
     var ret = new StringBuilder()
     val theme = new Tab2 //TODO add into SpinalConfig
-    val generic = if(interface.genericElements.isEmpty) ""
-      else
-        "#(\n" + interface.genericElements.map{case (name, useless, default) =>
-          if(default == null)
-            s"${theme.porttab}parameter ${name},\n"
-          else
-            s"${theme.porttab}parameter ${name} = ${default},\n"
-        }.reduce(_ + _).stripSuffix(",\n") + "\n) "
-    ret ++= s"interface ${interface.definitionName} ${generic}() ;\n\n"
+    val generic = if(interface.genericElements.isEmpty) {
+      ""
+    } else if (interface.thisIsSVstruct) {
+      LocatedPendingError(s"sv struct is still under develop. By now sv generics are not allowed.")
+      ""
+    } else {
+      "#(\n" + interface.genericElements.map{case (name, useless, default) =>
+        if(default == null)
+          s"${theme.porttab}parameter ${name},\n"
+        else
+          s"${theme.porttab}parameter ${name} = ${default},\n"
+      }.reduce(_ + _).stripSuffix(",\n") + "\n) "
+    }
+    ret ++= (
+      if (!interface.thisIsSVstruct) (
+        s"interface ${interface.definitionName} ${generic}() ;\n\n"
+      ) else (
+        s"typedef struct {\n\n"
+      )
+    )
     val sizeZero = mutable.HashSet[String]()
     def genBase[T <: Data](ret: StringBuilder, name: String, name1: String, elem: T): Unit = {
       elem match {
@@ -691,63 +702,75 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     }
     ret ++= "\n"
     if(pc.config.svInterfaceIncludeModport && !interface.thisIsNotSVModport) {
-      interface.allModPort
-        .foreach{case x =>
-          var modportString = new StringBuilder()
-          modportString ++= s"${theme.porttab}modport ${x} (\n"
+      if (interface.thisIsSVstruct) {
+        LocatedPendingError(s"sv struct cannot contain sv modport")
+      } else {
+        interface.allModPort
+          .foreach{case x =>
+            var modportString = new StringBuilder()
+            modportString ++= s"${theme.porttab}modport ${x} (\n"
 
-          val toplevel = globalData.toplevel
-          val phase = globalData.phaseContext.topLevel
-          globalData.toplevel = null
-          globalData.phaseContext.topLevel = null
-          val c = new Component {
-            val y = interface.clone().asInstanceOf[interface.type]
-            y.callModPort(x)
-          }
-          globalData.toplevel = toplevel
-          globalData.phaseContext.topLevel = phase
+            val toplevel = globalData.toplevel
+            val phase = globalData.phaseContext.topLevel
+            globalData.toplevel = null
+            globalData.phaseContext.topLevel = null
+            val c = new Component {
+              val y = interface.clone().asInstanceOf[interface.type]
+              y.callModPort(x)
+            }
+            globalData.toplevel = toplevel
+            globalData.phaseContext.topLevel = phase
 
-          def genModportSig[T <: Data](modportString: StringBuilder, name: String, elem: T): Unit = {
-            elem match {
-              case elem: Interface if !elem.thisIsNotSVIF => {
-                //TODO:check more than one modport has same `in` `out` direction
-                val modport = if(elem.checkModport().isEmpty) {
-                  LocatedPendingError(s"no suitable modport found for ${elem}")
-                  ""
-                } else {
-                  elem.checkModport().head
+            def genModportSig[T <: Data](modportString: StringBuilder, name: String, elem: T): Unit = {
+              elem match {
+                case elem: Interface if !elem.thisIsNotSVIF => {
+                  //TODO:check more than one modport has same `in` `out` direction
+                  val modport = if(elem.checkModport().isEmpty) {
+                    LocatedPendingError(s"no suitable modport found for ${elem}")
+                    ""
+                  } else {
+                    elem.checkModport().head
+                  }
+                  modportString ++= f"${theme.porttab}${theme.porttab}.${name}(${name}.${modport}),\n"
                 }
-                modportString ++= f"${theme.porttab}${theme.porttab}.${name}(${name}.${modport}),\n"
-              }
-              case elem: Bundle => {
-                for((name1, node) <- elem.elementsCache) {
-                  genModportSig(modportString, s"${name}_${name1}", node)
+                case elem: Bundle => {
+                  for((name1, node) <- elem.elementsCache) {
+                    genModportSig(modportString, s"${name}_${name1}", node)
+                  }
                 }
-              }
-              case elem: Vec[_] => {
-                for((node, idx) <- elem.zipWithIndex) {
-                  genModportSig(modportString, s"${name}_${idx}", node)
+                case elem: Vec[_] => {
+                  for((node, idx) <- elem.zipWithIndex) {
+                    genModportSig(modportString, s"${name}_${idx}", node)
+                  }
                 }
-              }
-              case elem => {
-                val dir = elem.dir match {
-                  case `in`    => "input "
-                  case `out`   => "output"
-                  case `inout` => "inout "
-                  case _       => throw new Exception(s"Unknown direction in interface ${interface}: ${elem}"); ""
+                case elem => {
+                  val dir = elem.dir match {
+                    case `in`    => "input "
+                    case `out`   => "output"
+                    case `inout` => "inout "
+                    case _       => throw new Exception(s"Unknown direction in interface ${interface}: ${elem}"); ""
+                  }
+                  if(!sizeZero.contains(name))
+                    modportString ++= f"${theme.porttab}${theme.porttab}${dir}%-15s ${name},\n"
                 }
-                if(!sizeZero.contains(name))
-                  modportString ++= f"${theme.porttab}${theme.porttab}${dir}%-15s ${name},\n"
               }
             }
+            for ((name, elem) <- c.y.elementsCache) {
+              genModportSig(modportString, name, elem)
+            }
+            ret ++= modportString.toString().stripSuffix(",\n") + "\n" + s"${theme.porttab});\n\n"
           }
-          for ((name, elem) <- c.y.elementsCache) {
-            genModportSig(modportString, name, elem)
-          }
-          ret ++= modportString.toString().stripSuffix(",\n") + "\n" + s"${theme.porttab});\n\n"
-        }
       }
-    ret ++= "endinterface\n\n"
+    }
+    //else {
+    //}
+    ret ++= (
+      if (!interface.thisIsSVstruct) {
+        "endinterface\n\n"
+      } else {
+        s"} ${interface.definitionName};\n\n"
+      }
+    )
     ret
   }
 
