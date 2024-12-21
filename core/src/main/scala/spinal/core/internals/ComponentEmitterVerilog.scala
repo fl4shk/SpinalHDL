@@ -222,7 +222,8 @@ class ComponentEmitterVerilog(
             case s: Nameable => "_" + s.getName()
             case _ => ""
           }
-          val name = component.localNamingScope.allocateName((anonymSignalPrefix + sName).replace('.', '_'))
+          val name =
+          component.localNamingScope.allocateName(PhaseInterfaceNameGen((anonymSignalPrefix + sName)))
           declarations ++= emitExpressionWrap(e, name)
           wrappedExpressionToName(e) = name
         }
