@@ -2577,9 +2577,6 @@ object PhaseInterfaceNameGen {
       prevName = tempName
       tempName = tempName.stripSuffix("]")
     } while (tempName != prevName)
-    println(
-      s"PhaseInterfaceNameGen(): ${tempName}"
-    )
     tempName
   }
 }
