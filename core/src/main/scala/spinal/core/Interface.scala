@@ -48,6 +48,7 @@ class Interface extends Bundle {
   var origDefinitionName: String = null//this.getClass.getSimpleName
   var thisIsNotSVModport = false
   var thisIsNotSVIF = false
+  var thisIsSVstruct = false
   var noConvertSVIFvec = false
   /** Set the definition name of the component */
   def setDefinitionName(name: String): this.type = {
@@ -229,14 +230,14 @@ class Interface extends Bundle {
     //}}
     this.thisIsNotSVModport = true
   }
-  def doConvertSVIFvec(): Unit = {
+  def dontConvertSVIFvec(): Unit = {
     this.elementsCache.foreach{
-      case (name, x: Interface) => x.doConvertSVIFvec()
+      case (name, x: Interface) => x.dontConvertSVIFvec()
       case _ =>
     }
-    this.noConvertSVIFvec = false
+    this.noConvertSVIFvec = true
   }
-  def doConvertSVIFvecThisLevel(): Unit = {
-    this.noConvertSVIFvec = false
+  def dontConvertSVIFvecThisLevel(): Unit = {
+    this.noConvertSVIFvec = true
   }
 }

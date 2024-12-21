@@ -2565,12 +2565,6 @@ class PhaseGetInfoRTL(prunedSignals: mutable.Set[BaseType], unusedSignals: mutab
   }
 }
 
-//object PhaseInterfaceNameGen {
-//  def apply(
-//    baseName: String
-//  ): String = {
-//  }
-//}
 class PhasePropagateNames(pc: PhaseContext) extends PhaseMisc {
   override def impl(pc: PhaseContext) : Unit = {
     import pc._
