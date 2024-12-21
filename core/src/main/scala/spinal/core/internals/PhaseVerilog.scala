@@ -1049,8 +1049,8 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     }
     for ((nodeOdn, nodeIntfSet) <- svIntfWalkDataMap.view) {
       for (nodeIntf <- nodeIntfSet.view) {
-        svIntfGraphMap.get(nodeOdn) match {
-          case Some(graphRoot) => {
+        svIntfGraphArrReverse.find(_._1 == nodeOdn) match {
+          case Some((name, graphRoot)) => {
             doUpdateSvifGraph(
               nodeOdn=nodeOdn,
               nodeIntf=nodeIntf,
@@ -1059,8 +1059,8 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             )
           }
           case None => {
-            svIntfGraphMap += (
-              nodeOdn -> mkNewGraph(interface=nodeIntf)
+            svIntfGraphArrReverse += (
+              (nodeOdn, mkNewGraph(interface=nodeIntf))
             )
           }
         }
@@ -1303,8 +1303,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         )
       }
     }
-    val svIntfGraphArr = mutable.ArrayBuffer[(String, SvifGraph)]()
-    for ((name, graph) <- svIntfGraphMap) {
+    for ((name, graph) <- svIntfGraphArrReverse) {
       svIntfGraphArr.prepend((name, graph))
     }
     for (mode <- 0 to 2) {
