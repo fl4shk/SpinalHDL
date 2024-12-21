@@ -1271,10 +1271,16 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         for (interface <- graph.intfSet.view) {
           func(interface=interface)
         }
-      } else if (mode == 1) {
-        svInterface += (
-          graph.anyIntf.definitionName -> emitInterface(graph.anyIntf)
-        )
+      } else  {
+        val tempIntf = graph.anyIntf
+        if (
+          (mode == 1 && tempIntf.thisIsSVstruct)
+          || (mode == 2 && !tempIntf.thisIsSVstruct)
+        ) {
+          svInterface += (
+            graph.anyIntf.definitionName -> emitInterface(tempIntf)
+          )
+        }
       }
       if (
         graph.child != null
@@ -1285,7 +1291,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         )
       }
     }
-    for (mode <- 0 to 1) {
+    for (mode <- 0 to 2) {
       for ((name, graph) <- svIntfGraphMap) {
         lastPasses(graph=graph, mode=mode)
       }

@@ -158,7 +158,7 @@ class PhaseContext(val config: SpinalConfig) {
   //}
   val svIntfGraphMap = mutable.LinkedHashMap[String, SvifGraph]()
   var svInterface = (
-    mutable.LinkedHashMap[String, StringBuilder]()
+    mutable.ArrayBuffer[(String, StringBuilder)]()
     //mutable.LinkedHashMap[String, TempSVIF/*(Interface, StringBuilder, Int, mutable.ArrayBuffer[Interface])*/](),
     //mutable.LinkedHashMap[String, TempSVIF](),
     //mutable.LinkedHashMap[String, TempSVIF](),
