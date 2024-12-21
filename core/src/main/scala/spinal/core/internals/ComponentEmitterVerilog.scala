@@ -229,11 +229,10 @@ class ComponentEmitterVerilog(
               var tempName: String = (
                 sName.replace('.', '_').replace('[', '_')
               )
-              var prevName: String = tempName + ""
+              var tempName1: String = tempName + ""
               do {
-                prevName = tempName
                 tempName = tempName.stripSuffix("]")
-              } while (tempName != prevName)
+              } while (tempName != tempName.stripSuffix("]"))
               tempName
             }
           ))
