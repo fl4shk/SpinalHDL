@@ -2565,21 +2565,12 @@ class PhaseGetInfoRTL(prunedSignals: mutable.Set[BaseType], unusedSignals: mutab
   }
 }
 
-object PhaseInterfaceNameGen {
-  def apply(
-    baseName: String
-  ): String = {
-    var tempName: String = (
-      baseName.replace('.', '_').replace('[', '_')
-    )
-    var prevName: String = tempName + ""
-    do {
-      prevName = tempName
-      tempName = tempName.stripSuffix("]")
-    } while (tempName != prevName)
-    tempName
-  }
-}
+//object PhaseInterfaceNameGen {
+//  def apply(
+//    baseName: String
+//  ): String = {
+//  }
+//}
 class PhasePropagateNames(pc: PhaseContext) extends PhaseMisc {
   override def impl(pc: PhaseContext) : Unit = {
     import pc._
@@ -2599,7 +2590,7 @@ class PhasePropagateNames(pc: PhaseContext) extends PhaseMisc {
             s.walkDrivingExpressions{
               case src : BaseType => if(src.isUnnamed || (src.algoIncrementale == algoId && src.algoInt > depth)){
                 src.unsetName()
-                src.setWeakName(globalData.anonymSignalPrefix + "_" + PhaseInterfaceNameGen(dst.getName()))
+                src.setWeakName(globalData.anonymSignalPrefix + "_" + dst.getName())
                 src.algoIncrementale = algoId
                 src.algoInt = depth
                 explore(src, depth + 1)
