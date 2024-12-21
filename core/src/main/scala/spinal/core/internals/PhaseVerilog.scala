@@ -739,9 +739,9 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                   modportString ++= f"${theme.porttab}${theme.porttab}${dir}%-15s ${name},\n"
                 }
                 case elem: Interface if !elem.thisIsNotSVIF => {
-                  if (elem.thisIsSVstruct) {
-                    LocatedPendingError(s"sv struct cannot contain sv modport")
-                  }
+                  //if (elem.thisIsSVstruct) {
+                  //  LocatedPendingError(s"sv struct cannot contain sv modport")
+                  //}
                   //TODO:check more than one modport has same `in` `out` direction
                   val modport = if(elem.checkModport().isEmpty) {
                     LocatedPendingError(s"no suitable modport found for ${elem}")
