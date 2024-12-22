@@ -186,6 +186,7 @@ class Interface extends Bundle {
           }
           case b: Bundle => {
             b.flattenForeach(x => x.addTag(IsInterface))
+            //b.parent = this
             super.valCallbackRec(ref, name)
             //checkForBundleWithIntfElem(elem=b, name=name)
             checkForErrors(

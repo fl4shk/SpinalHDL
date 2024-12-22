@@ -533,11 +533,11 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     node: Data, cache: ArrayBuffer[(String, Data)], name: String
   ): Option[(String, Data)] = {
     cache.flatMap{
-      //case (a, x: Bundle) => if(x != node) {
-      //  getElemName(node, x.elementsCache, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
-      //} else {
-      //  Some((s"${name}_${a}".stripPrefix("_"), x))
-      //}
+      case (a, x: Bundle) => if(x != node) {
+        getElemName(node, x.elementsCache, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
+      } else {
+        Some((s"${name}_${a}".stripPrefix("_"), x))
+      }
       case (a, x: Vec[_]) => //if(x != node) {
         getElemName(node, x.elements, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
       //} else {
@@ -1147,20 +1147,21 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           //): Option[(String, Data)] = {
           //  getElemName(someNode, cache, name)
           //}
-          val bndlList = someNode.rootBndlList().reverse
+          val IFlist = someNode.rootIFList().reverse
 
           var newName: String = ""
           //(
           //  getElemName(someNode, IFlist(0).elementsCache, "").getOrElse("no_name", null)._1
           //)
           //var tempName: String = ""
-          var (prevIntfIsInterface, prevIntf) = bndlList(0)
+          //var (prevIntfIsInterface, prevIntf) = IFlist(0)
+          var prevIntf = IFlist(0)
           var prevName: String = (
             getElemName(someNode, prevIntf.elementsCache, "").getOrElse("no_name", null)._1
           )
           newName = prevName
           //newName = prevName
-          for (((intfIsInterface, intf), intfIdx) <- bndlList.view.zipWithIndex) {
+          for ((/*(intfIsInterface,*/ intf/*)*/, intfIdx) <- IFlist.view.zipWithIndex) {
             //val tempNode: Data = (
             //  if (intfIdx == IFlist.view.size - 1) (
             //    someNode
@@ -1169,21 +1170,24 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             //  )
             //)
             if (intfIdx > 0) {
-              val myFound = intf.elementsCache.find{
-                current => {
-                  //current._1 == prevName
-                  current._2 == (
-                    prevIntf
-                  )
-                }
-              } match { //.getOrElse("no_name", null)
-                case Some((name, elem)) => {
-                  (name, elem)
-                }
-                case None => {
-                  ("no_name", null)
-                }
-              }
+              //val myFound = intf.elementsCache.find{
+              //  current => {
+              //    //current._1 == prevName
+              //    current._2 == (
+              //      prevIntf
+              //    )
+              //  }
+              //} match { //.getOrElse("no_name", null)
+              //  case Some((name, elem)) => {
+              //    (name, elem)
+              //  }
+              //  case None => {
+              //    ("no_name", null)
+              //  }
+              //}
+              val myFound = getElemName(
+                node=prevIntf, cache=intf.elementsCache, name="" //prevName
+              ).getOrElse("no_name", null)
               println(
                 s"debug: "
                 + s"${myFound._1}; "
@@ -1252,7 +1256,8 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               newName = (
                 tempName
                 //+ (if (intfIdx != 0) "." else "")
-                + (if (prevIntfIsInterface) "." else "_")
+                //+ (if (prevIntfIsInterface) "." else "_")
+                + "."
                 + newName
                 //+ {
                 //  tempName = getElemName(
@@ -1262,12 +1267,13 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                 //}
               )
             }
-            prevIntfIsInterface = intfIsInterface
+            //prevIntfIsInterface = intfIsInterface
             prevIntf = intf
-            if (intfIdx == bndlList.view.size - 1) {
+            if (intfIdx == IFlist.view.size - 1) {
               newName = (
                 intf.getName()
-                + (if (prevIntfIsInterface) "." else "_")
+                //+ (if (prevIntfIsInterface) "." else "_")
+                + "."
                 + newName
               )
             }
