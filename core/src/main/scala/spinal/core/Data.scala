@@ -838,9 +838,9 @@ trait Data extends ContextUser with NameableByComponent with Assignable with Spi
       lastRoot
     } else {
       now.IFparent match {
-        //case x: Interface if x.thisIsNotSVIF => {
-        //  rootBndlRec(now.IFparent, lastRoot)
-        //}
+        case x: Interface if x.thisIsNotSVIF => {
+          rootBndlRec(now.IFparent, (false, now.IFparent.asInstanceOf[Bundle]) :: lastRoot)
+        }
         case x: Interface if !x.thisIsNotSVIF => {
           rootBndlRec(now.IFparent, (true, now.IFparent.asInstanceOf[Interface]) :: lastRoot)
         }

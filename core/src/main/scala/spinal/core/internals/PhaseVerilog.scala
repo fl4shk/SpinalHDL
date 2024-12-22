@@ -1168,7 +1168,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             //    IFlist.view(intfIdx + 1)
             //  )
             //)
-            if (intfIdx > 0) {
+            //if (intfIdx > 0) {
               val myFound = intf.elementsCache.find{
                 current => {
                   //current._1 == prevName
@@ -1247,7 +1247,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               )
               prevIntfIsInterface = intfIsInterface
               prevIntf = intf
-            }
+            //}
             if (intfIdx == bndlList.view.size - 1) {
               newName = (
                 intf.getName()
