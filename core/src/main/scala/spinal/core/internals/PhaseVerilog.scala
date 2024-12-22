@@ -1188,8 +1188,9 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             //} else {
             //}
             if (
-              intfIdx > 0
+              //intfIdx > 0
               //&& intfIdx < (IFlist.view.size - 1)
+              true
             ) {
               val nextName = getElemName(prevIntf.IFparent, intf.elementsCache, "") match {
                 case Some((name, x)) => {
