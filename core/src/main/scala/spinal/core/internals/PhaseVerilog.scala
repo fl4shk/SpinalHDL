@@ -1245,9 +1245,9 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                 //  tempName
                 //}
               )
-              prevIntfIsInterface = intfIsInterface
-              prevIntf = intf
             }
+            prevIntfIsInterface = intfIsInterface
+            prevIntf = intf
             if (intfIdx == bndlList.view.size - 1) {
               newName = (
                 intf.getName()
