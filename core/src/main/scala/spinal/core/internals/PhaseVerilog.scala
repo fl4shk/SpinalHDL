@@ -409,6 +409,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                       if (doCompare(
                         nodeData=nodeElem,
                         otherNodeData=otherElem,
+                        vecChainArr=vecChainArr,
                       ) == CmpResultKind.Diff) {
                         return CmpResultKind.Diff
                       }
