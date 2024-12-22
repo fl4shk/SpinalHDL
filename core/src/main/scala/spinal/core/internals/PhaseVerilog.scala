@@ -422,6 +422,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                     }
                   }
                 }
+                return CmpResultKind.Same
               }
               else {
                 return CmpResultKind.Diff
