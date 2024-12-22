@@ -322,9 +322,9 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
   ): CmpResultKind = {
     //--------
     nodeData match {
-      case nodeIntf: Interface if !nodeIntf.thisIsNotSVIF => {
+      case nodeIntf: Interface /*if !nodeIntf.thisIsNotSVIF*/ => {
         otherNodeData match {
-          case otherIntf: Interface if !otherIntf.thisIsNotSVIF => {
+          case otherIntf: Interface /*if !otherIntf.thisIsNotSVIF*/ => {
             if (
               emitInterface(nodeIntf, false).result()
               == emitInterface(otherIntf, false).result()
@@ -1132,14 +1132,14 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           //): Option[(String, Data)] = {
           //  getElemName(someNode, cache, name)
           //}
-          val IFList = someNode.rootIFList().reverse
+          val IFlist = someNode.rootIFList().reverse
 
           var newName: String = ""
           //(
           //  getElemName(someNode, IFlist(0).elementsCache, "").getOrElse("no_name", null)._1
           //)
           //var tempName: String = ""
-          var prevIntf: Interface = IFList(0) 
+          var prevIntf: Interface = IFlist(0) 
           //val prevIntfElementsCache: ArrayBuffer[(String, Data)] = prevIntf match {
           //  case myPrevIntf: Bundle => myPrevIntf.elementsCache
           //  case _ => null
@@ -1157,7 +1157,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           )
           newName = prevName
           //newName = prevName
-          for ((intf, intfIdx) <- IFList.view.zipWithIndex) {
+          for ((intf, intfIdx) <- IFlist.view.zipWithIndex) {
             //val tempNode: Data = (
             //  if (intfIdx == IFlist.view.size - 1) (
             //    someNode
@@ -1166,7 +1166,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             //  )
             //)
             val intfElementsCache: ArrayBuffer[(String, Data)] = intf match {
-              case myIntf: Bundle => myIntf.elementsCache
+              case myIntf: Interface => myIntf.elementsCache
               case _ => null
             }
             if (intfIdx > 0) {
@@ -1258,7 +1258,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               )
               prevIntf = intf
             }
-            if (intfIdx == IFList.view.size - 1) {
+            if (intfIdx == IFlist.view.size - 1) {
               newName = (
                 intf.getName()
                 + "."

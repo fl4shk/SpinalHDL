@@ -822,7 +822,7 @@ trait Data extends ContextUser with NameableByComponent with Assignable with Spi
             rootIFrec(now.IFparent, now.IFparent.asInstanceOf[Interface] :: lastRoot)
           }
         }
-        case b: Bundle => rootIFrec(now.IFparent, lastRoot, justFirst)
+        //case b: Bundle => rootIFrec(now.IFparent, lastRoot, justFirst)
         case _ => rootIFrec(now.IFparent, lastRoot, justFirst)
       }
     }
