@@ -1188,13 +1188,13 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               val myFound = getElemName(
                 node=prevIntf, cache=intf.elementsCache, name="" //prevName
               ).getOrElse("no_name", null)
-              println(
-                s"debug: "
-                + s"${myFound._1}; "
-                + s"${prevName} ${prevIntf.getName()}; "
-                + s"${intf.getName()}; "
-                + s"${intfIdx}"
-              )
+              //println(
+              //  s"debug: "
+              //  + s"${myFound._1}; "
+              //  + s"${prevName} ${prevIntf.getName()}; "
+              //  + s"${intf.getName()}; "
+              //  + s"${intfIdx}"
+              //)
               prevName = myFound._1
               var tempName: String = prevName //+ ""
 
