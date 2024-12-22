@@ -993,8 +993,8 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     walkDeclarations {
       case node: BaseType if(node.hasTag(IsInterface)) => {
         val rootIF = node.rootIF()
-        if (!svRootIntfFound._1.contains(rootIF)) {
-          svRootIntfFound._1 += rootIF
+        if (!svRootIntfFound.contains(rootIF)) {
+          svRootIntfFound += rootIF
           //--------
           updateWalkData(nodeData=rootIF)
         }
