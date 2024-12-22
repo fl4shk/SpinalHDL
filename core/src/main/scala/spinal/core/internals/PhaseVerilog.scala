@@ -1129,7 +1129,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           //): Option[(String, Data)] = {
           //  getElemName(someNode, cache, name)
           //}
-          val bndlList = someNode.rootBndlList().reverse
+          val bndlList = someNode.rootIFList().reverse
 
           var newName: String = ""
           //(
