@@ -1344,9 +1344,10 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                 }
                 case None => {
                   println(
-                    s"eek! (outer) ${intf.getName()} ${intf.origDefinitionName}"
+                    //s"eek! (outer) ${intf.getName()} ${intf.origDefinitionName}"
+                    s"Found `Bundle`? (outer) ${intf.getName()} ${intf.origDefinitionName}"
                   )
-                  assert(false)
+                  //assert(false)
                 }
               }
               if (idx - 1 >= 0) {
