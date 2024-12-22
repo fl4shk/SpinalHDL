@@ -4,7 +4,7 @@ import spinal.core._
 import scala.collection.{immutable, mutable}
 
 class SvifGraph(
-  val intfSet: mutable.LinkedHashSet[Interface], 
+  val intfSet: mutable.HashSet[Interface], 
 ) {
   var child: SvifGraph = null
 

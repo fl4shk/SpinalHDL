@@ -946,16 +946,16 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     ): SvifGraph = {
       return new SvifGraph(
         intfSet={
-          val intfSet = mutable.LinkedHashSet[Interface]()
+          val intfSet = mutable.HashSet[Interface]()
           intfSet += interface
           intfSet
         },
       )
     }
-    val svIntfWalkDataMap = mutable.LinkedHashMap[String, mutable.LinkedHashSet[Interface]]()
-    //println(
-    //  s"creating nodeWalkDataMap etc." 
-    //)
+    val svIntfWalkDataMap = mutable.HashMap[String, mutable.HashSet[Interface]]()
+    println(
+      s"creating nodeWalkDataMap etc." 
+    )
     //var maxRootIFListSize: Int = 0
     def updateWalkData(
       nodeData: Data
@@ -966,7 +966,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             intfSet += someIntf
           }
           case None => {
-            val intfSet = mutable.LinkedHashSet[Interface]()
+            val intfSet = mutable.HashSet[Interface]()
             intfSet += someIntf
             svIntfWalkDataMap += (someIntf.origDefinitionName -> intfSet)
           }
