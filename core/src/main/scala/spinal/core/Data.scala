@@ -830,17 +830,23 @@ trait Data extends ContextUser with NameableByComponent with Assignable with Spi
     //  rootIFrec(now.IFparent, lastRoot)
     //}
   }
-  def rootBndlList(): List[Data] = {
+  def rootBndlList(): List[(Boolean, Bundle)] = {
     rootBndlRec(this, Nil)
   }
-  def rootBndlRec(now: Data, lastRoot: List[Data]): List[Data] = {
+  def rootBndlRec(now: Data, lastRoot: List[(Boolean, Bundle)]): List[(Boolean, Bundle)] = {
     if (now.IFparent == null) {
       lastRoot
     } else {
       now.IFparent match {
-        case x: Interface if x.thisIsNotSVIF => rootBndlRec(now.IFparent, lastRoot)
-        case y: Interface if !y.thisIsNotSVIF => rootBndlRec(now.IFparent, now.IFparent :: lastRoot)
-        case b: Bundle => rootBndlRec(now.IFparent, now.IFparent :: lastRoot)
+        //case x: Interface if x.thisIsNotSVIF => {
+        //  rootBndlRec(now.IFparent, lastRoot)
+        //}
+        case x: Interface if !x.thisIsNotSVIF => {
+          rootBndlRec(now.IFparent, (true, now.IFparent.asInstanceOf[Interface]) :: lastRoot)
+        }
+        case b: Bundle => {
+          rootBndlRec(now.IFparent, (false, now.IFparent.asInstanceOf[Bundle]) :: lastRoot)
+        }
         case _ => rootBndlRec(now.IFparent, lastRoot)
       }
     }
