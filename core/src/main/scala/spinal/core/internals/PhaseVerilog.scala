@@ -533,16 +533,16 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     node: Data, cache: ArrayBuffer[(String, Data)], name: String
   ): Option[(String, Data)] = {
     cache.flatMap{
-      case (a, x: Bundle) => if(x != node) {
-        getElemName(node, x.elementsCache, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
-      } else {
-        Some((s"${name}_${a}".stripPrefix("_"), x))
-      }
-      case (a, x: Vec[_]) => if(x != node) {
+      //case (a, x: Bundle) => if(x != node) {
+      //  getElemName(node, x.elementsCache, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
+      //} else {
+      //  Some((s"${name}_${a}".stripPrefix("_"), x))
+      //}
+      case (a, x: Vec[_]) => //if(x != node) {
         getElemName(node, x.elements, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
-      } else {
-        Some((s"${name}_${a}".stripPrefix("_"), x))
-      }
+      //} else {
+      //  Some((s"${name}_${a}".stripPrefix("_"), x))
+      //}
       case (a, x) => if(x == node) Some((s"${name}_${a}".stripPrefix("_"), x)) else None
     }.headOption
   }
@@ -1168,7 +1168,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             //    IFlist.view(intfIdx + 1)
             //  )
             //)
-            //if (intfIdx > 0) {
+            if (intfIdx > 0) {
               val myFound = intf.elementsCache.find{
                 current => {
                   //current._1 == prevName
@@ -1247,7 +1247,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               )
               prevIntfIsInterface = intfIsInterface
               prevIntf = intf
-            //}
+            }
             if (intfIdx == bndlList.view.size - 1) {
               newName = (
                 intf.getName()
