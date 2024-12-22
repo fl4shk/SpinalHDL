@@ -1172,9 +1172,25 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               val myFound = intf.elementsCache.find{
                 current => {
                   //current._1 == prevName
-                  current._2 == prevIntf
+                  current._2 == (
+                    prevIntf
+                  )
                 }
-              }.getOrElse("no_name", null)
+              } match { //.getOrElse("no_name", null)
+                case Some((name, elem)) => {
+                  (name, elem)
+                }
+                case None => {
+                  ("no_name", null)
+                }
+              }
+              println(
+                s"debug: "
+                + s"${myFound._1}; "
+                + s"${prevName} ${prevIntf.getName()}; "
+                + s"${intf.getName()}; "
+                + s"${intfIdx}"
+              )
               prevName = myFound._1
               var tempName: String = prevName //+ ""
 
