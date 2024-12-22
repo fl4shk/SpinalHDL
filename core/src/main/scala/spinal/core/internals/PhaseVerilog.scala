@@ -414,17 +414,17 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                       }
                     }
                     case None => {
-                      println(
-                        s"eek! couldn't find this nodeElemName:${nodeElemName}"
-                      )
-                      assert(false)
-                      return null
+                      //println(
+                      //  s"eek! couldn't find this nodeElemName:${nodeElemName}"
+                      //)
+                      //assert(false)
+                      //return null
+                      return CmpResultKind.Diff
                     }
                   }
                 }
                 return CmpResultKind.Same
-              }
-              else {
+              } else {
                 return CmpResultKind.Diff
               }
             } else {
@@ -1128,64 +1128,32 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           //): Option[(String, Data)] = {
           //  getElemName(someNode, cache, name)
           //}
-          val IFlist = someNode.rootIFList().reverse
-          //if (IFlist.size == 0 || IFlist == Nil) {
-          //  return
-          //}
-          //println(
-          //  s"${IFlist.size}"
-          //)
-          //val newName = IFlist match {
-          //  case head :: tail => tail.foldLeft((head, List(head.getName()))){case ((nowIf, nameList), someNode) =>
-          //    //(someNode, nowIf.elementsCache.find(_._2 == someNode).get._1 :: nameList)//TODO:error handle on find.get
-          //    nowIf.elementsCache.find(current => (
-          //      current._2 == someNode
-          //      //|| current._2.getName() == someNode.getName()
-          //    )) match {
-          //      case Some(pair) => {
-          //        (someNode, pair._1 :: nameList)
-          //      }
-          //      case None => {
-          //        println(
-          //          s"Interface someNode: "
-          //          + s"${someNode.getName()} ${someNode.getClass.getSimpleName}; "
-          //          + s"${someNode.definitionName} "
-          //        )
-          //        //someNode match {
-          //        //  case interface: Interface => {
-          //        //  }
-          //        //  //case data: Data => {
-          //        //  //  println(
-          //        //  //    s"Data someNode: "
-          //        //  //    + s"${data.getName()} ${data.getClass.getSimpleName}; "
-          //        //  //  )
-          //        //  //}
-          //        //  case _ => {
-          //        //    println(
-          //        //      s"unknown someNode type: "
-          //        //      + s"${someNode.getName()} ${someNode.getClass.getSimpleName}"
-          //        //    )
-          //        //  }
-          //        //}
-          //        (someNode, someNode.getName() :: nameList)
-          //      }
-          //    }
-          //  }._2.reverse.reduce(_ + "." + _) + "." +
-          //    myGetElemName(IFlist.last.elementsCache, "").getOrElse("no_name", null)._1//TODO:error handle on find.get
-          //}
+          val bndlList = someNode.rootBndlList().reverse
 
           var newName: String = ""
           //(
           //  getElemName(someNode, IFlist(0).elementsCache, "").getOrElse("no_name", null)._1
           //)
           //var tempName: String = ""
-          var prevIntf: Interface = IFlist(0)
+          var prevIntf: Data = bndlList(0) 
+          val prevIntfElementsCache: ArrayBuffer[(String, Data)] = prevIntf match {
+            case myPrevIntf: Bundle => myPrevIntf.elementsCache
+            case _ => null
+          }
+          //match {
+          //  case prevIntf: Interface if !x.thisIsNotSVIF => {
+          //  }
+          //  case prevBndl: Bundle => {
+          //  }
+          //  case _ => {
+          //  }
+          //}
           var prevName: String = (
-            getElemName(someNode, prevIntf.elementsCache, "").getOrElse("no_name", null)._1
+            getElemName(someNode, prevIntfElementsCache, "").getOrElse("no_name", null)._1
           )
           newName = prevName
           //newName = prevName
-          for ((intf, intfIdx) <- IFlist.view.zipWithIndex) {
+          for ((intf, intfIdx) <- bndlList.view.zipWithIndex) {
             //val tempNode: Data = (
             //  if (intfIdx == IFlist.view.size - 1) (
             //    someNode
@@ -1193,8 +1161,12 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             //    IFlist.view(intfIdx + 1)
             //  )
             //)
+            val intfElementsCache: ArrayBuffer[(String, Data)] = intf match {
+              case myIntf: Bundle => myIntf.elementsCache
+              case _ => null
+            }
             if (intfIdx > 0) {
-              val myFound = intf.elementsCache.find{
+              val myFound = intfElementsCache.find{
                 current => {
                   //current._1 == prevName
                   current._2 == prevIntf
@@ -1272,7 +1244,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               )
               prevIntf = intf
             }
-            if (intfIdx == IFlist.view.size - 1) {
+            if (intfIdx == bndlList.view.size - 1) {
               newName = (
                 intf.getName()
                 + "."

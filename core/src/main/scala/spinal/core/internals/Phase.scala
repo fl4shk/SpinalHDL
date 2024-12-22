@@ -164,7 +164,7 @@ class PhaseContext(val config: SpinalConfig) {
   )
   //var svInterfaceFound = mutable.LinkedHashSet[TempInterface]()
   val svRootIntfFound = (
-    mutable.HashSet[Interface]() //mutable.LinkedHashMap[String, mutable.ArrayBuffer[TempInterface]]()
+    mutable.HashSet[Data]() //mutable.LinkedHashMap[String, mutable.ArrayBuffer[TempInterface]]()
     //mutable.HashSet[Interface]()
   )
 
