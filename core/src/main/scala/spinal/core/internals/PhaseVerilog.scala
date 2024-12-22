@@ -322,9 +322,9 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
   ): CmpResultKind = {
     //--------
     nodeData match {
-      case nodeIntf: Interface => {
+      case nodeIntf: Interface if !nodeIntf.thisIsNotSVIF => {
         otherNodeData match {
-          case otherIntf: Interface => {
+          case otherIntf: Interface if !otherIntf.thisIsNotSVIF => {
             if (
               emitInterface(nodeIntf, false).result()
               == emitInterface(otherIntf, false).result()
@@ -429,7 +429,10 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                 return CmpResultKind.Diff
               }
             } else {
-               return CmpResultKind.Same
+              return (
+                CmpResultKind.Same
+                //CmpResultKind.Diff
+              )
             }
           }
           case _ => {
@@ -532,7 +535,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     cache.flatMap{
       case (a, x: Bundle) => getElemName(node, x.elementsCache, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
       case (a, x: Vec[_]) => getElemName(node, x.elements, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
-      case (a, x) => if(x == node) Some((s"${name}_${a}".stripPrefix("_"), x)) else None
+      case (a, x) => /*if(x == node)*/ Some((s"${name}_${a}".stripPrefix("_"), x)) //else None
     }.headOption
   }
   def emitInterface(interface: Interface, convertIntfVec: Boolean=true): StringBuilder = {
@@ -1136,11 +1139,11 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           //  getElemName(someNode, IFlist(0).elementsCache, "").getOrElse("no_name", null)._1
           //)
           //var tempName: String = ""
-          var prevIntf: Data = IFList(0) 
-          val prevIntfElementsCache: ArrayBuffer[(String, Data)] = prevIntf match {
-            case myPrevIntf: Bundle => myPrevIntf.elementsCache
-            case _ => null
-          }
+          var prevIntf: Interface = IFList(0) 
+          //val prevIntfElementsCache: ArrayBuffer[(String, Data)] = prevIntf match {
+          //  case myPrevIntf: Bundle => myPrevIntf.elementsCache
+          //  case _ => null
+          //}
           //match {
           //  case prevIntf: Interface if !x.thisIsNotSVIF => {
           //  }
@@ -1150,7 +1153,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           //  }
           //}
           var prevName: String = (
-            getElemName(someNode, prevIntfElementsCache, "").getOrElse("no_name", null)._1
+            getElemName(someNode, prevIntf.elementsCache, "").getOrElse("no_name", null)._1
           )
           newName = prevName
           //newName = prevName
@@ -1174,7 +1177,15 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               //  }
               //}.getOrElse("no_name", null)
               //prevName = myFound._1
-              prevName = getElemName(prevIntf, intfElementsCache, "").getOrElse("no_name", null)._1
+              prevName = getElemName(prevIntf, intf.elementsCache, "") match {
+                case Some((name, x)) => {
+                  s"${name}"
+                }
+                case None => {
+                  s"no_name"
+                }
+              }
+              //.getOrElse("no_name", null)._1
               val myFound = (prevName, prevIntf)
               var tempName: String = prevName //+ ""
 
@@ -1351,10 +1362,10 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                 }
                 case None => {
                   println(
-                    //s"eek! (outer) ${intf.getName()} ${intf.origDefinitionName}"
-                    s"Found `Bundle`? (outer) ${intf.getName()} ${intf.origDefinitionName}"
+                    s"eek! (outer) ${intf.getName()} ${intf.origDefinitionName}"
+                    //s"Found `Bundle`? (outer) ${intf.getName()} ${intf.origDefinitionName}"
                   )
-                  //assert(false)
+                  assert(false)
                 }
               }
               if (idx - 1 >= 0) {
