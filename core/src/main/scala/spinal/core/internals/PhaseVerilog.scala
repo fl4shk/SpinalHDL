@@ -322,9 +322,9 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
   ): CmpResultKind = {
     //--------
     nodeData match {
-      case nodeIntf: Interface /*if !nodeIntf.thisIsNotSVIF*/ => {
+      case nodeIntf: Interface if !nodeIntf.thisIsNotSVIF => {
         otherNodeData match {
-          case otherIntf: Interface /*if !otherIntf.thisIsNotSVIF*/ => {
+          case otherIntf: Interface if !otherIntf.thisIsNotSVIF => {
             if (
               emitInterface(nodeIntf, false).result()
               == emitInterface(otherIntf, false).result()
@@ -1018,9 +1018,16 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             }
           }
         }
+        case nodeBndl: Bundle => {
+          if (nodeBndl.elementsCache != null) {
+            for ((name, elem) <- nodeBndl.elementsCache) {
+              updateWalkData(nodeData=elem)
+            }
+          }
+        }
         case nodeVec: Vec[_] => {
           for (vecIdx <- 0 until nodeVec.size) {
-            updateWalkData(nodeVec(vecIdx))
+            updateWalkData(nodeData=nodeVec(vecIdx))
           }
         }
         case _ =>
