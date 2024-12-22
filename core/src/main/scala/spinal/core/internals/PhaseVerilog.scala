@@ -1172,19 +1172,15 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             //    IFlist.view(intfIdx + 1)
             //  )
             //)
-            val intfElementsCache: ArrayBuffer[(String, Data)] = intf match {
-              case myIntf: Interface => myIntf.elementsCache
-              case _ => null
-            }
+            //val intfElementsCache: ArrayBuffer[(String, Data)] = intf match {
+            //  case myIntf: Interface => myIntf.elementsCache
+            //  case _ => null
+            //}
+            //if (intfIdx == 0) {
+            //} else {
+            //}
             if (intfIdx > 0) {
-              //val myFound = intfElementsCache.find{
-              //  current => {
-              //    //current._1 == prevName
-              //    current._2 == prevIntf
-              //  }
-              //}.getOrElse("no_name", null)
-              //prevName = myFound._1
-              prevName = getElemName(intf, intf.elementsCache, "") match {
+              val nextName = getElemName(prevIntf, intf.elementsCache, "") match {
                 case Some((name, x)) => {
                   s"${name}"
                 }
@@ -1193,11 +1189,18 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                 }
               }
               println(
-                s"debug: ${prevIntf.getName()} ${prevName}; ${intf.getName()}"
+                s"debug: ${prevIntf.getName()} ${prevName}; ${intf.getName()}; ${nextName}"
               )
+              //val myFound = intfElementsCache.find{
+              //  current => {
+              //    //current._1 == prevName
+              //    current._2 == prevIntf
+              //  }
+              //}.getOrElse("no_name", null)
+              //prevName = myFound._1
               //.getOrElse("no_name", null)._1
-              val myFound = (prevName, prevIntf)
-              var tempName: String = prevName //+ ""
+              val myFound = (nextName, intf)
+              var tempName: String = nextName //+ ""
 
               val tempSvInterfaceVecFound = mutable.HashSet[Data]()
               val myParentVec: Data = getParentVec(
@@ -1226,7 +1229,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                       for ((vecElem, vecIdx) <- parentVec.view.zipWithIndex) {
                         if (vecElem == myFound._2) {
                           tempName = (
-                            prevName.stripSuffix(s"_${vecIdx}") + s"[${vecIdx}]"
+                            nextName.stripSuffix(s"_${vecIdx}") + s"[${vecIdx}]"
                           )
                           didFind = true
                         }
@@ -1267,6 +1270,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                 //}
               )
               prevIntf = intf
+              prevName = nextName
             }
             if (intfIdx == IFlist.view.size - 1) {
               newName = (
