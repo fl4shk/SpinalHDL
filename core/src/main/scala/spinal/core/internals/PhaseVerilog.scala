@@ -535,7 +535,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     cache.flatMap{
       case (a, x: Bundle) => getElemName(node, x.elementsCache, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
       case (a, x: Vec[_]) => getElemName(node, x.elements, s"${name}_${a}").map(x => (x._1.stripPrefix("_"), x._2))
-      case (a, x) => /*if(x == node)*/ Some((s"${name}_${a}".stripPrefix("_"), x)) //else None
+      case (a, x) => if(x == node) Some((s"${name}_${a}".stripPrefix("_"), x)) else None
     }.headOption
   }
   def emitInterface(interface: Interface, convertIntfVec: Boolean=true): StringBuilder = {
