@@ -1184,7 +1184,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               //  }
               //}.getOrElse("no_name", null)
               //prevName = myFound._1
-              prevName = getElemName(prevIntf, intf.elementsCache, "") match {
+              prevName = getElemName(intf, intf.elementsCache, prevName) match {
                 case Some((name, x)) => {
                   s"${name}"
                 }
