@@ -1267,13 +1267,6 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     }
 
     def lastPasses(graph: SvifGraph, mode: Int): Unit = {
-      //if (graph.child != null) {
-      //  // have to iterate backwards
-      //  lastPasses(
-      //    graph=graph.child,
-      //    mode=mode
-      //  )
-      //}
       if (mode == 0) {
         globalScope.lock = false
         val newName = globalScope.allocateName(mkNewName(graph.origDefinitionName, graph.count))
@@ -1303,6 +1296,15 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           )
         }
       }
+      if (mode == 0 || mode == 2) {
+        if (graph.child != null) {
+          // have to iterate backwards
+          lastPasses(
+            graph=graph.child,
+            mode=mode
+          )
+        }
+      }
     }
     //for ((name, graph) <- svIntfGraphMap) {
     //  svIntfGraphArr.prepend((name, graph))
@@ -1311,44 +1313,50 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
       println(
         s"now on mode ${mode}"
       )
-      val svInterfaceFound = mutable.HashSet[Interface]()
-      walkDeclarations{
-        case node: BaseType if (node.hasTag(IsInterface)) => {
-          val rootIFList = node.rootIFList()
-          def func(idx: Int): Unit = {
-            val intf = rootIFList.view(idx)
-            if (svInterfaceFound.contains(intf)) {
-              return
-            }
-            svInterfaceFound += intf
-            svIntfGraphMap.get(intf.origDefinitionName) match {
-              case Some(graphRoot) => {
-                graphRoot.findChildInterface(intf) match {
-                  case Some(graph) => {
-                    lastPasses(graph=graph, mode=mode)
-                  }
-                  case None => {
-                    println(
-                      s"eek! (inner) ${intf.getName()} ${intf.origDefinitionName}"
-                    )
-                    assert(false)
+      if (mode == 0 || mode == 2) {
+        for ((name, graph) <- svIntfGraphMap) {
+          lastPasses(graph=graph, mode=mode)
+        }
+      } else if (mode == 1) {
+        val svInterfaceFound = mutable.HashSet[Interface]()
+        walkDeclarations{
+          case node: BaseType if (node.hasTag(IsInterface)) => {
+            val rootIFList = node.rootIFList()
+            def func(idx: Int): Unit = {
+              val intf = rootIFList.view(idx)
+              if (svInterfaceFound.contains(intf)) {
+                return
+              }
+              svInterfaceFound += intf
+              svIntfGraphMap.get(intf.origDefinitionName) match {
+                case Some(graphRoot) => {
+                  graphRoot.findChildInterface(intf) match {
+                    case Some(graph) => {
+                      lastPasses(graph=graph, mode=mode)
+                    }
+                    case None => {
+                      println(
+                        s"eek! (inner) ${intf.getName()} ${intf.origDefinitionName}"
+                      )
+                      assert(false)
+                    }
                   }
                 }
+                case None => {
+                  println(
+                    s"eek! (outer) ${intf.getName()} ${intf.origDefinitionName}"
+                  )
+                  assert(false)
+                }
               }
-              case None => {
-                println(
-                  s"eek! (outer) ${intf.getName()} ${intf.origDefinitionName}"
-                )
-                assert(false)
+              if (idx - 1 >= 0) {
+                func(idx - 1)
               }
             }
-            if (idx - 1 >= 0) {
-              func(idx - 1)
-            }
+            func(rootIFList.size - 1)
           }
-          func(rootIFList.size - 1)
+          case _ =>
         }
-        case _ =>
       }
       //for ((name, graph) <- svIntfGraphArr) {
       //  //lastPasses(graph=graph, mode=mode)
