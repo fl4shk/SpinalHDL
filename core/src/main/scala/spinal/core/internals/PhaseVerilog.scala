@@ -1184,7 +1184,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               //  }
               //}.getOrElse("no_name", null)
               //prevName = myFound._1
-              prevName = getElemName(intf, intf.elementsCache, prevName) match {
+              prevName = getElemName(intf, intf.elementsCache, "") match {
                 case Some((name, x)) => {
                   s"${name}"
                 }
@@ -1192,6 +1192,9 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
                   s"no_name"
                 }
               }
+              println(
+                s"debug: ${prevIntf.getName()} ${prevName}; ${intf.getName()}"
+              )
               //.getOrElse("no_name", null)._1
               val myFound = (prevName, prevIntf)
               var tempName: String = prevName //+ ""
