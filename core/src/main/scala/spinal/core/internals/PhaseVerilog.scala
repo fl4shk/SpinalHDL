@@ -1308,6 +1308,9 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     //  svIntfGraphArr.prepend((name, graph))
     //}
     for (mode <- 0 to 2) {
+      println(
+        s"now on mode ${mode}"
+      )
       val svInterfaceFound = mutable.HashSet[Interface]()
       walkDeclarations{
         case node: BaseType if (node.hasTag(IsInterface)) => {
