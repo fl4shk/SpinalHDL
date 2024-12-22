@@ -110,10 +110,10 @@ class Interface extends Bundle {
     ): Unit = {
       elem match {
         case intf: Interface => {
-          if (foundBundle) {
-            LocatedPendingError(s"sv interface is still under develop. by now Interface cannot be contained inside Bundle that is contained inside Interface")
-            return
-          }
+          //if (foundBundle) {
+          //  LocatedPendingError(s"sv interface is still under develop. by now Interface cannot be contained inside Bundle that is contained inside Interface")
+          //  return
+          //}
           if (!intf.thisIsSVstruct && foundStruct) {
             LocatedPendingError(s"sv interface cannot be contained inside sv struct")
             return
