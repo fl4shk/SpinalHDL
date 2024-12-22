@@ -1129,14 +1129,14 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           //): Option[(String, Data)] = {
           //  getElemName(someNode, cache, name)
           //}
-          val bndlList = someNode.rootIFList().reverse
+          val IFList = someNode.rootIFList().reverse
 
           var newName: String = ""
           //(
           //  getElemName(someNode, IFlist(0).elementsCache, "").getOrElse("no_name", null)._1
           //)
           //var tempName: String = ""
-          var prevIntf: Data = bndlList(0) 
+          var prevIntf: Data = IFList(0) 
           val prevIntfElementsCache: ArrayBuffer[(String, Data)] = prevIntf match {
             case myPrevIntf: Bundle => myPrevIntf.elementsCache
             case _ => null
@@ -1154,7 +1154,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           )
           newName = prevName
           //newName = prevName
-          for ((intf, intfIdx) <- bndlList.view.zipWithIndex) {
+          for ((intf, intfIdx) <- IFList.view.zipWithIndex) {
             //val tempNode: Data = (
             //  if (intfIdx == IFlist.view.size - 1) (
             //    someNode
@@ -1167,13 +1167,15 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               case _ => null
             }
             if (intfIdx > 0) {
-              val myFound = intfElementsCache.find{
-                current => {
-                  //current._1 == prevName
-                  current._2 == prevIntf
-                }
-              }.getOrElse("no_name", null)
-              prevName = myFound._1
+              //val myFound = intfElementsCache.find{
+              //  current => {
+              //    //current._1 == prevName
+              //    current._2 == prevIntf
+              //  }
+              //}.getOrElse("no_name", null)
+              //prevName = myFound._1
+              prevName = getElemName(prevIntf, intfElementsCache, "").getOrElse("no_name", null)._1
+              val myFound = (prevName, prevIntf)
               var tempName: String = prevName //+ ""
 
               val tempSvInterfaceVecFound = mutable.HashSet[Data]()
@@ -1245,7 +1247,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
               )
               prevIntf = intf
             }
-            if (intfIdx == bndlList.view.size - 1) {
+            if (intfIdx == IFList.view.size - 1) {
               newName = (
                 intf.getName()
                 + "."
