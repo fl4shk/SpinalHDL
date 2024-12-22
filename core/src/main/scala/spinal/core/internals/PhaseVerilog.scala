@@ -396,14 +396,45 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         }
       }
       // TODO: support non-`Interface` `Bundle`s
-      //case nodeBndl: Bundle => {
-      //  otherNodeData match {
-      //    case otherBndl: Bundle => {
-      //    }
-      //    case _ => {
-      //    }
-      //  }
-      //}
+      case nodeBndl: Bundle => {
+        otherNodeData match {
+          case otherBndl: Bundle => {
+            if (nodeBndl.elementsCache != null && otherBndl.elementsCache != null) {
+              if (nodeBndl.elementsCache.size == otherBndl.elementsCache.size) {
+                for ((nodeElemName, nodeElem) <- nodeBndl.elementsCache.view) {
+                  otherBndl.elementsCache.find{otherElem => {
+                    otherElem._1 == nodeElemName
+                  }} match {
+                    case Some((otherElemName, otherElem)) => {
+                      if (doCompare(
+                        nodeData=nodeElem,
+                        otherNodeData=otherElem,
+                      ) == CmpResultKind.Diff) {
+                        return CmpResultKind.Diff
+                      }
+                    }
+                    case None => {
+                      println(
+                        s"eek! couldn't find this nodeElemName:${nodeElemName}"
+                      )
+                      assert(false)
+                      return null
+                    }
+                  }
+                }
+              }
+              else {
+                return CmpResultKind.Diff
+              }
+            } else {
+               return CmpResultKind.Same
+            }
+          }
+          case _ => {
+            return CmpResultKind.Diff
+          }
+        }
+      }
       case nodeVec: Vec[_] => {
         otherNodeData match {
           case otherVec: Vec[_] => {
