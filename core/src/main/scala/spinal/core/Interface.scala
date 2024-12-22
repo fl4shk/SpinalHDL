@@ -282,35 +282,41 @@ class Interface extends Bundle {
     }}
     this.thisIsNotSVIF = true
   }
-  def notSVModport(): Unit = {
+  def notSVModport(): this.type = {
     this.elementsCache.foreach{
       case (name, x: Interface) => x.notSVModport()
       case _ =>
     }
     this.thisIsNotSVModport = true
+    this
   }
 
-  def notSVModportthisLevel(): Unit = {
+  def notSVModportthisLevel(): this.type = {
     this.thisIsNotSVModport = true
+    this
   }
-  def dontConvertSVIFvec(): Unit = {
+  def dontConvertSVIFvec(): this.type = {
     this.elementsCache.foreach{
       case (name, x: Interface) => x.dontConvertSVIFvec()
       case _ =>
     }
     this.noConvertSVIFvec = true
+    this
   }
-  def dontConvertSVIFvecThisLevel(): Unit = {
+  def dontConvertSVIFvecThisLevel(): this.type = {
     this.noConvertSVIFvec = true
+    this
   }
-  def setAsSVstruct(): Unit = {
+  def setAsSVstruct(): this.type = {
     this.elementsCache.foreach{
       case (name, x: Interface) => x.setAsSVstruct()
       case _ =>
     }
     this.thisIsSVstruct = true
+    this
   }
-  def setAsSVstructThisLevel(): Unit = {
+  def setAsSVstructThisLevel(): this.type = {
     this.thisIsSVstruct = true
+    this
   }
 }

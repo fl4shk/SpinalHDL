@@ -156,23 +156,16 @@ class PhaseContext(val config: SpinalConfig) {
   //  var interfaceString: StringBuilder,
   //) {
   //}
-  val svIntfGraphArrReverse = mutable.ArrayBuffer[(String, SvifGraph)]()
+  val svIntfGraphMap = mutable.LinkedHashMap[String, SvifGraph]()
   val svIntfGraphArr = mutable.ArrayBuffer[(String, SvifGraph)]()
   var svInterface = (
     mutable.ArrayBuffer[(String, StringBuilder)]()
-    //mutable.LinkedHashMap[String, TempSVIF/*(Interface, StringBuilder, Int, mutable.ArrayBuffer[Interface])*/](),
-    //mutable.LinkedHashMap[String, TempSVIF](),
-    //mutable.LinkedHashMap[String, TempSVIF](),
-    //mutable.LinkedHashMap[String, Interface](),
   )
-  //case class TempInterface(
-  //  var interface: Interface, //mutable.ArrayBuffer[Interface]
-  //) {
-  //}
   //var svInterfaceFound = mutable.LinkedHashSet[TempInterface]()
-  val svRootIntfFound = mutable.HashSet[Interface]() //mutable.LinkedHashMap[String, mutable.ArrayBuffer[TempInterface]]()
-  //var svInterfaceFound = mutable.LinkedHashSet[TempInterface]()
-  //val svInterfaceFound = (mutable.HashSet[Interface](), mutable.HashSet[String]())
+  val svRootIntfFound = (
+    mutable.HashSet[Interface]() //mutable.LinkedHashMap[String, mutable.ArrayBuffer[TempInterface]]()
+    //mutable.HashSet[Interface]()
+  )
 
   def walkAll(func: Any => Unit): Unit = {
     GraphUtils.walkAllComponents(topLevel, c => {

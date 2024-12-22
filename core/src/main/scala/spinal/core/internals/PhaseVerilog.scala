@@ -952,7 +952,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
         },
       )
     }
-    val svIntfWalkDataMap = mutable.HashMap[String, mutable.HashSet[Interface]]()
+    val svIntfWalkDataMap = mutable.LinkedHashMap[String, mutable.LinkedHashSet[Interface]]()
     //println(
     //  s"creating nodeWalkDataMap etc." 
     //)
@@ -966,7 +966,7 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             intfSet += someIntf
           }
           case None => {
-            val intfSet = mutable.HashSet[Interface]()
+            val intfSet = mutable.LinkedHashSet[Interface]()
             intfSet += someIntf
             svIntfWalkDataMap += (someIntf.origDefinitionName -> intfSet)
           }
@@ -993,8 +993,8 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     walkDeclarations {
       case node: BaseType if(node.hasTag(IsInterface)) => {
         val rootIF = node.rootIF()
-        if (!svRootIntfFound.contains(rootIF)) {
-          svRootIntfFound += rootIF
+        if (!svRootIntfFound._1.contains(rootIF)) {
+          svRootIntfFound._1 += rootIF
           //--------
           updateWalkData(nodeData=rootIF)
         }
@@ -1049,8 +1049,8 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     }
     for ((nodeOdn, nodeIntfSet) <- svIntfWalkDataMap.view) {
       for (nodeIntf <- nodeIntfSet.view) {
-        svIntfGraphArrReverse.find(_._1 == nodeOdn) match {
-          case Some((name, graphRoot)) => {
+        svIntfGraphMap.get(nodeOdn) match {
+          case Some(graphRoot) => {
             doUpdateSvifGraph(
               nodeOdn=nodeOdn,
               nodeIntf=nodeIntf,
@@ -1059,9 +1059,11 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
             )
           }
           case None => {
-            svIntfGraphArrReverse += (
-              (nodeOdn, mkNewGraph(interface=nodeIntf))
+            val newGraph = mkNewGraph(interface=nodeIntf)
+            svIntfGraphMap += (
+              nodeOdn -> newGraph
             )
+            //svIntfGraphArr.prepend((nodeOdn, newGraph))
           }
         }
       }
@@ -1265,6 +1267,13 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
     }
 
     def lastPasses(graph: SvifGraph, mode: Int): Unit = {
+      //if (graph.child != null) {
+      //  // have to iterate backwards
+      //  lastPasses(
+      //    graph=graph.child,
+      //    mode=mode
+      //  )
+      //}
       if (mode == 0) {
         globalScope.lock = false
         val newName = globalScope.allocateName(mkNewName(graph.origDefinitionName, graph.count))
@@ -1294,22 +1303,53 @@ class PhaseInterface(pc: PhaseContext) extends PhaseNetlist{
           )
         }
       }
-      if (
-        graph.child != null
-      ) {
-        lastPasses(
-          graph=graph.child,
-          mode=mode
-        )
-      }
     }
-    for ((name, graph) <- svIntfGraphArrReverse) {
-      svIntfGraphArr.prepend((name, graph))
-    }
+    //for ((name, graph) <- svIntfGraphMap) {
+    //  svIntfGraphArr.prepend((name, graph))
+    //}
     for (mode <- 0 to 2) {
-      for ((name, graph) <- svIntfGraphArr) {
-        lastPasses(graph=graph, mode=mode)
+      val svInterfaceFound = mutable.HashSet[Interface]()
+      walkDeclarations{
+        case node: BaseType if (node.hasTag(IsInterface)) => {
+          val rootIFList = node.rootIFList()
+          def func(idx: Int): Unit = {
+            val intf = rootIFList.view(idx)
+            if (svInterfaceFound.contains(intf)) {
+              return
+            }
+            svInterfaceFound += intf
+            svIntfGraphMap.get(intf.origDefinitionName) match {
+              case Some(graphRoot) => {
+                graphRoot.findChildInterface(intf) match {
+                  case Some(graph) => {
+                    lastPasses(graph=graph, mode=mode)
+                  }
+                  case None => {
+                    println(
+                      s"eek! (inner) ${intf.getName()} ${intf.origDefinitionName}"
+                    )
+                    assert(false)
+                  }
+                }
+              }
+              case None => {
+                println(
+                  s"eek! (outer) ${intf.getName()} ${intf.origDefinitionName}"
+                )
+                assert(false)
+              }
+            }
+            if (idx - 1 >= 0) {
+              func(idx - 1)
+            }
+          }
+          func(rootIFList.size - 1)
+        }
+        case _ =>
       }
+      //for ((name, graph) <- svIntfGraphArr) {
+      //  //lastPasses(graph=graph, mode=mode)
+      //}
     }
 
     //println("lastPass phase done" )
